@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Sparkles, Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { loginUser } from "@/services/auth/login"
+import { redirectToGoogleLogin } from "@/services/auth/redirect-google-auth"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -36,8 +37,9 @@ export default function LoginPage() {
     }
   }
 
-  const handleGoogleLoginClick = async (e: React.FormEvent) => {
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google/login`
+  const handleGoogleLoginClick = (e: React.FormEvent) => {
+    e.preventDefault()
+    redirectToGoogleLogin()
   }
 
   return (

@@ -10,29 +10,56 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sparkles, Eye, EyeOff, Mail, Lock, User, School } from "lucide-react"
+import { Sparkles, Eye, EyeOff, Mail, Lock, User, School, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { signUp } from "@/services/auth/sign-up"
+import { useRouter } from "next/navigation"
+import { redirectToGoogleLogin } from "@/services/auth/redirect-google-auth"
 
 export default function SignupPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
-    school: "",
-    gradeLevel: "",
     agreeToTerms: false,
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle signup logic here
-    console.log("Signup attempt:", formData)
+    setIsLoading(true)
+
+    try {
+
+      await signUp(formData);
+      router.push("/sign-up/email-verification")
+
+    } catch (err) {
+      setIsLoading(false)
+    }
   }
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleGoogleLoginClick = (e: React.FormEvent) => {
+    e.preventDefault()
+    redirectToGoogleLogin()
+  }
+
+  const isFormDataValid = () => {
+    const { firstName, lastName, email, password, agreeToTerms } = formData
+    return (
+      firstName.trim() !== "" &&
+      lastName.trim() !== "" &&
+      email.trim() !== "" &&
+      password.trim() !== "" &&
+      agreeToTerms === true
+    )
   }
 
   return (
@@ -63,7 +90,7 @@ export default function SignupPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                    First Name
+                    First Name﹡
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -75,13 +102,14 @@ export default function SignupPage() {
                       onChange={(e) => handleInputChange("firstName", e.target.value)}
                       className="pl-10 h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                    Last Name
+                    Last Name﹡
                   </Label>
                   <Input
                     id="lastName"
@@ -91,13 +119,14 @@ export default function SignupPage() {
                     onChange={(e) => handleInputChange("lastName", e.target.value)}
                     className="h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email Address
+                  Email Address﹡
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -109,13 +138,14 @@ export default function SignupPage() {
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     className="pl-10 h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password
+                  Password﹡
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -127,6 +157,7 @@ export default function SignupPage() {
                     onChange={(e) => handleInputChange("password", e.target.value)}
                     className="pl-10 pr-10 h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
@@ -136,42 +167,6 @@ export default function SignupPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="school" className="text-sm font-medium text-gray-700">
-                  School/Institution
-                </Label>
-                <div className="relative">
-                  <School className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="school"
-                    type="text"
-                    placeholder="Your school name"
-                    value={formData.school}
-                    onChange={(e) => handleInputChange("school", e.target.value)}
-                    className="pl-10 h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gradeLevel" className="text-sm font-medium text-gray-700">
-                  Grade Level You Teach
-                </Label>
-                <Select onValueChange={(value) => handleInputChange("gradeLevel", value)}>
-                  <SelectTrigger className="h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500">
-                    <SelectValue placeholder="Select grade level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="elementary">Elementary (K-5)</SelectItem>
-                    <SelectItem value="middle">Middle School (6-8)</SelectItem>
-                    <SelectItem value="high">High School (9-12)</SelectItem>
-                    <SelectItem value="adult">Adult Education</SelectItem>
-                    <SelectItem value="esl">ESL/EFL</SelectItem>
-                    <SelectItem value="multiple">Multiple Levels</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -196,9 +191,16 @@ export default function SignupPage() {
               <Button
                 type="submit"
                 className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 text-white"
-                disabled={!formData.agreeToTerms}
+                disabled={!isFormDataValid() || isLoading}
               >
-                Get Started
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Registering...
+                  </>
+                ) : (
+                  "Register"
+                )}
               </Button>
             </form>
 
@@ -212,7 +214,7 @@ export default function SignupPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-12 border-gray-200 hover:bg-amber-50">
+              <Button onClick={handleGoogleLoginClick} variant="outline" className="h-12 border-gray-200 hover:bg-amber-50">
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
