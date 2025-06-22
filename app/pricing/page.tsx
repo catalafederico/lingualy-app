@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Sparkles, Check, X, BookOpen, Users, Award, Clock, Star, ArrowRight, Zap } from "lucide-react"
 import Link from "next/link"
+import Navbar from "@/components/landing/Navbar"
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false)
@@ -112,37 +113,7 @@ export default function PricingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
-      {/* Header */}
-      <header className="px-4 lg:px-6 h-20 flex items-center border-b bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
-        <Link href="/" className="flex items-center justify-center">
-          <div className="relative">
-            <Sparkles className="h-10 w-10 text-amber-600" />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-400 rounded-full animate-pulse"></div>
-          </div>
-          <span className="ml-3 text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-            Lingualy
-          </span>
-        </Link>
-        <nav className="ml-auto flex gap-6 items-center">
-          <Link href="/lessons" className="text-sm font-medium hover:text-amber-600 transition-colors text-gray-700">
-            Lessons
-          </Link>
-          <Link href="/pricing" className="text-sm font-medium text-amber-600 transition-colors">
-            Pricing
-          </Link>
-          <Link href="/about" className="text-sm font-medium hover:text-amber-600 transition-colors text-gray-700">
-            About
-          </Link>
-          <Link href="/login" className="text-sm font-medium hover:text-amber-600 transition-colors text-gray-700">
-            Login
-          </Link>
-          <Link href="/signup">
-            <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 text-white">
-              Get Started
-            </Button>
-          </Link>
-        </nav>
-      </header>
+      <Navbar />
 
       <main className="flex-1">
         {/* Hero Section */}

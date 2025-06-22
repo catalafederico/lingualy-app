@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Sparkles } from "lucide-react"
 
-export default function Header() {
+export default function Navbar() {
   return (
     <header className="px-4 lg:px-6 h-20 flex items-center border-b bg-white/80 dark:bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 shadow-sm dark:border-gray-700">
       <Link href="/" className="flex items-center justify-center">

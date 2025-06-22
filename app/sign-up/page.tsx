@@ -14,7 +14,7 @@ import { Sparkles, Eye, EyeOff, Mail, Lock, User, School, Loader2 } from "lucide
 import Link from "next/link"
 import { signUp } from "@/services/auth/sign-up"
 import { useRouter } from "next/navigation"
-import { redirectToGoogleLogin } from "@/services/auth/redirect-google-auth"
+import { handleGoogleLoginClick } from "@/services/auth/google"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -44,11 +44,6 @@ export default function SignupPage() {
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleGoogleLoginClick = (e: React.FormEvent) => {
-    e.preventDefault()
-    redirectToGoogleLogin()
   }
 
   const isFormDataValid = () => {

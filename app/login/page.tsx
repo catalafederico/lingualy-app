@@ -12,7 +12,9 @@ import { Separator } from "@/components/ui/separator"
 import { Sparkles, Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { loginUser } from "@/services/auth/login"
-import { redirectToGoogleLogin } from "@/services/auth/redirect-google-auth"
+import { handleGoogleLoginClick } from "@/services/auth/google"
+import { handleFacebookLoginClick } from "@/services/auth/facebook"
+import { AxiosError, HttpStatusCode } from "axios"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -31,15 +33,13 @@ export default function LoginPage() {
       await loginUser({email, password})
       router.push("/home")
 
-    } catch (error) {
+    } catch (error: any) {
+      if(error.status === HttpStatusCode.Forbidden){
+        router.push("/sign-up/email-verification")
+      }
       setError("Invalid email or password")
       setIsLoading(false)
     }
-  }
-
-  const handleGoogleLoginClick = (e: React.FormEvent) => {
-    e.preventDefault()
-    redirectToGoogleLogin()
   }
 
   return (
@@ -177,7 +177,7 @@ export default function LoginPage() {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" className="h-12 border-gray-200 hover:bg-orange-50" disabled={isLoading}>
+              <Button onClick={handleFacebookLoginClick} variant="outline" className="h-12 border-gray-200 hover:bg-orange-50" disabled={isLoading}>
                 <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M13.397 20.997v-8.196h2.765l.411-3.209h-3.176V7.548c0-.926.258-1.56 1.587-1.56h1.684V3.127A22.336 22.336 0 0 0 14.201 3c-2.444 0-4.122 1.492-4.122 4.231v2.355H7.332v3.209h2.753v8.202h3.312z" />
                 </svg>
@@ -187,7 +187,7 @@ export default function LoginPage() {
 
             <div className="text-center text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link href="/signup" className="text-amber-600 hover:text-amber-700 font-medium">
+              <Link href="/sign-up" className="text-amber-600 hover:text-amber-700 font-medium">
                 Sign up
               </Link>
             </div>

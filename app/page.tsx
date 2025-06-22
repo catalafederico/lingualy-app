@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect } from "react"
-import Header from "@/components/landing/Header"
 import Hero from "@/components/landing/Hero"
 import Features from "@/components/landing/Features"
 import Testimonials from "@/components/landing/Testimonials"
 import CTA from "@/components/landing/CTA"
 import Footer from "@/components/landing/Footer"
+import Navbar from "@/components/landing/Navbar"
 
 export default function LingualyLanding() {
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function LingualyLanding() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <Header />
+      <Navbar />
       <main className="flex-1">
         <Hero />
         <Features />
