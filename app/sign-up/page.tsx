@@ -59,13 +59,13 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4 sm:p-6 lg:p-8">
       {/* Background Elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-amber-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-      <div className="absolute bottom-20 right-10 w-72 h-72 bg-orange-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+      <div className="absolute top-20 left-10 w-72 h-72 bg-amber-200 dark:bg-amber-600 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+      <div className="absolute bottom-20 right-10 w-72 h-72 bg-orange-200 dark:bg-orange-600 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
 
-      <div className="w-full max-w-md relative">
-        <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-md">
+      <div className="w-full max-w-lg relative mx-auto">
+        <Card className="shadow-2xl border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md">
           <CardHeader className="space-y-4 text-center pb-8">
             <div className="flex justify-center">
               <div className="relative">
@@ -74,29 +74,29 @@ export default function SignupPage() {
               </div>
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+              <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent text-center">
                 Join Lingualy Today
               </CardTitle>
-              <CardDescription className="text-gray-600 mt-2">Get started and transform your teaching</CardDescription>
+              <CardDescription className="text-gray-600 dark:text-gray-300 mt-2 text-center text-sm sm:text-base">Get started and transform your teaching</CardDescription>
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+          <CardContent className="space-y-6 text-center">
+            <form onSubmit={handleSubmit} className="space-y-4 w-full">
+              <div className="flex flex-col gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-300 text-left block">
                     First Name﹡
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                     <Input
                       id="firstName"
                       type="text"
                       placeholder="John"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange("firstName", e.target.value)}
-                      className="pl-10 h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
+                      className="pl-10 h-12 border-gray-200 dark:border-gray-600 focus:border-amber-500 focus:ring-amber-500 dark:bg-slate-700 dark:text-white"
                       required
                       disabled={isLoading}
                     />
@@ -104,7 +104,7 @@ export default function SignupPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-300 text-left block">
                     Last Name﹡
                   </Label>
                   <Input
@@ -113,7 +113,7 @@ export default function SignupPage() {
                     placeholder="Doe"
                     value={formData.lastName}
                     onChange={(e) => handleInputChange("lastName", e.target.value)}
-                    className="h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
+                    className="h-12 border-gray-200 dark:border-gray-600 focus:border-amber-500 focus:ring-amber-500 dark:bg-slate-700 dark:text-white"
                     required
                     disabled={isLoading}
                   />
@@ -121,18 +121,18 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300 text-left block">
                   Email Address﹡
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="teacher@school.edu"
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="pl-10 h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
+                    className="pl-10 h-12 border-gray-200 dark:border-gray-600 focus:border-amber-500 focus:ring-amber-500 dark:bg-slate-700 dark:text-white"
                     required
                     disabled={isLoading}
                   />
@@ -140,39 +140,39 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300 text-left block">
                   Password﹡
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Create a strong password"
                     value={formData.password}
                     onChange={(e) => handleInputChange("password", e.target.value)}
-                    className="pl-10 pr-10 h-12 border-gray-200 focus:border-amber-500 focus:ring-amber-500"
+                    className="pl-10 pr-10 h-12 border-gray-200 dark:border-gray-600 focus:border-amber-500 focus:ring-amber-500 dark:bg-slate-700 dark:text-white"
                     required
                     disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-center space-x-2 text-center">
                 <Checkbox
                   id="terms"
                   checked={formData.agreeToTerms}
                   onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
                   className="border-gray-300 text-amber-600 focus:ring-amber-500"
                 />
-                <label htmlFor="terms" className="text-sm text-gray-600">
+                <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-300">
                   I agree to the{" "}
                   <Link href="/terms" className="text-amber-600 hover:text-amber-700 font-medium">
                     Terms of Service
@@ -205,12 +205,12 @@ export default function SignupPage() {
                 <Separator className="w-full" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or sign up with</span>
+                <span className="bg-white dark:bg-slate-800 px-2 text-gray-500 dark:text-gray-400">Or sign up with</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Button onClick={handleGoogleLoginClick} variant="outline" className="h-12 border-gray-200 hover:bg-amber-50">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+              <Button onClick={handleGoogleLoginClick} variant="outline" className="h-12 border-gray-200 dark:border-gray-600 hover:bg-amber-50 dark:hover:bg-slate-700">
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
@@ -231,7 +231,7 @@ export default function SignupPage() {
                 </svg>
                 Google
               </Button>
-              <Button onClick={handleFacebookLoginClick} variant="outline" className="h-12 border-gray-200 hover:bg-orange-50">
+              <Button onClick={handleFacebookLoginClick} variant="outline" className="h-12 border-gray-200 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-slate-700">
                 <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M13.397 20.997v-8.196h2.765l.411-3.209h-3.176V7.548c0-.926.258-1.56 1.587-1.56h1.684V3.127A22.336 22.336 0 0 0 14.201 3c-2.444 0-4.122 1.492-4.122 4.231v2.355H7.332v3.209h2.753v8.202h3.312z" />
                 </svg>
@@ -239,7 +239,7 @@ export default function SignupPage() {
               </Button>
             </div>
 
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-300">
               Already have an account?{" "}
               <Link href="/login" className="text-amber-600 hover:text-amber-700 font-medium">
                 Sign in

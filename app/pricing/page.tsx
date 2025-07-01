@@ -112,29 +112,29 @@ export default function PricingPage() {
   ]
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <Navbar />
 
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full py-12 md:py-16 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50"></div>
-          <div className="absolute top-10 left-10 w-48 h-48 bg-amber-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-          <div className="absolute top-20 right-10 w-48 h-48 bg-orange-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"></div>
+          <div className="absolute top-10 left-10 w-48 h-48 bg-amber-200 dark:bg-amber-600 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+          <div className="absolute top-20 right-10 w-48 h-48 bg-orange-200 dark:bg-orange-600 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
 
           <div className="container relative px-4 md:px-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 max-w-4xl mx-auto">
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 text-center">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center">
                 Choose Your
-                <span className="block bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent mt-1">
                   Teaching Plan
                 </span>
               </h1>
 
               {/* Billing Toggle */}
-              <div className="flex items-center gap-4 p-1 bg-white rounded-full shadow-lg border">
+              <div className="flex items-center justify-center gap-2 sm:gap-4 p-1 bg-white dark:bg-slate-800 rounded-full shadow-lg border dark:border-gray-600">
                 <span
-                  className={`px-4 py-2 text-sm font-medium transition-colors ${!isAnnual ? "text-amber-600" : "text-gray-600"}`}
+                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${!isAnnual ? "text-amber-600" : "text-gray-600 dark:text-gray-300"}`}
                 >
                   Monthly
                 </span>
@@ -144,7 +144,7 @@ export default function PricingPage() {
                   className="data-[state=checked]:bg-amber-500"
                 />
                 <span
-                  className={`px-4 py-2 text-sm font-medium transition-colors ${isAnnual ? "text-amber-600" : "text-gray-600"}`}
+                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${isAnnual ? "text-amber-600" : "text-gray-600 dark:text-gray-300"}`}
                 >
                   Annual
                 </span>
@@ -157,16 +157,16 @@ export default function PricingPage() {
         </section>
 
         {/* Pricing Cards */}
-        <section className="w-full py-20 bg-white">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
+        <section className="w-full py-20 bg-white dark:bg-slate-900">
+          <div className="container px-4 md:px-6 text-center">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 w-full justify-items-center">
               {plans.map((plan, index) => (
                 <Card
                   key={plan.name}
                   className={`relative border-2 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 ${
                     plan.popular
-                      ? "border-orange-300 bg-gradient-to-br from-white to-orange-50"
-                      : "border-gray-200 bg-white"
+                      ? "border-orange-300 bg-gradient-to-br from-white to-orange-50 dark:from-slate-800 dark:to-orange-900/20 dark:border-orange-600"
+                      : "border-gray-200 dark:border-gray-600 bg-white dark:bg-slate-800"
                   }`}
                 >
                   {plan.popular && (
@@ -180,19 +180,19 @@ export default function PricingPage() {
 
                   <CardHeader className="text-center pb-8 pt-8">
                     <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                    <CardDescription className="text-gray-600 mt-2">{plan.description}</CardDescription>
+                    <CardDescription className="text-gray-600 dark:text-gray-300 mt-2">{plan.description}</CardDescription>
 
                     <div className="mt-6">
                       <div className="flex items-baseline justify-center gap-2">
-                        <span className="text-4xl font-bold text-gray-900">
+                        <span className="text-4xl font-bold text-gray-900 dark:text-white">
                           ${isAnnual ? Math.floor(plan.annualPrice / 12) : plan.monthlyPrice}
                         </span>
-                        <span className="text-gray-600">/month</span>
+                        <span className="text-gray-600 dark:text-gray-300">/month</span>
                       </div>
 
                       {isAnnual && (
                         <div className="mt-2 space-y-1">
-                          <p className="text-sm text-gray-500">Billed annually: ${plan.annualPrice}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Billed annually: ${plan.annualPrice}</p>
                           <Badge variant="secondary" className="bg-green-100 text-green-700">
                             Save ${plan.savings}/year
                           </Badge>
@@ -223,7 +223,7 @@ export default function PricingPage() {
                           ) : (
                             <X className="h-5 w-5 text-gray-400 flex-shrink-0" />
                           )}
-                          <span className={`text-sm ${feature.included ? "text-gray-900" : "text-gray-500"}`}>
+                          <span className={`text-sm ${feature.included ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
                             {feature.name}
                           </span>
                         </div>
@@ -236,17 +236,17 @@ export default function PricingPage() {
 
             {/* Enterprise CTA */}
             <div className="mt-16 text-center">
-              <Card className="max-w-2xl mx-auto border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+              <Card className="max-w-2xl mx-auto border-2 border-amber-200 dark:border-amber-600 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 dark:bg-slate-800">
                 <CardContent className="p-8">
                   <div className="flex items-center justify-center mb-4">
                     <Zap className="h-8 w-8 text-amber-600" />
                   </div>
                   <h3 className="text-2xl font-bold mb-4">Need Something Custom?</h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-gray-600 dark:text-gray-300 mb-6">
                     Perfect for large schools, districts, or organizations with specific needs. Get custom pricing,
                     dedicated support, and tailored solutions.
                   </p>
-                  <Button variant="outline" className="border-amber-300 hover:bg-amber-50">
+                  <Button variant="outline" className="border-amber-300 dark:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20">
                     Contact Sales
                   </Button>
                 </CardContent>
@@ -256,23 +256,23 @@ export default function PricingPage() {
         </section>
 
         {/* Features Comparison */}
-        <section className="w-full py-20 bg-gradient-to-br from-amber-50 to-orange-50">
+        <section className="w-full py-20 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-700">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Why Teachers Choose Lingualy</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                 Join thousands of educators who save time and improve student engagement with our comprehensive
                 resources.
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 w-full justify-items-center">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto">
                   <BookOpen className="h-8 w-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold">10,000+ Resources</h3>
-                <p className="text-gray-600">Comprehensive library covering all English teaching needs</p>
+                <p className="text-gray-600 dark:text-gray-300">Comprehensive library covering all English teaching needs</p>
               </div>
 
               <div className="text-center space-y-4">
@@ -280,7 +280,7 @@ export default function PricingPage() {
                   <Clock className="h-8 w-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold">Save 10+ Hours</h3>
-                <p className="text-gray-600">Weekly time savings with ready-to-use materials</p>
+                <p className="text-gray-600 dark:text-gray-300">Weekly time savings with ready-to-use materials</p>
               </div>
 
               <div className="text-center space-y-4">
@@ -288,7 +288,7 @@ export default function PricingPage() {
                   <Users className="h-8 w-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold">50,000+ Teachers</h3>
-                <p className="text-gray-600">Trusted by educators worldwide</p>
+                <p className="text-gray-600 dark:text-gray-300">Trusted by educators worldwide</p>
               </div>
 
               <div className="text-center space-y-4">
@@ -296,34 +296,34 @@ export default function PricingPage() {
                   <Award className="h-8 w-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold">Expert Created</h3>
-                <p className="text-gray-600">Materials crafted by certified educators</p>
+                <p className="text-gray-600 dark:text-gray-300">Materials crafted by certified educators</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* FAQ Section */}
-        <section className="w-full py-20 bg-white">
+        <section className="w-full py-20 bg-white dark:bg-slate-900">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Frequently Asked Questions</h2>
-              <p className="text-xl text-gray-600">Everything you need to know about Lingualy pricing and features.</p>
+              <p className="text-xl text-gray-600 dark:text-gray-300">Everything you need to know about Lingualy pricing and features.</p>
             </div>
 
-            <div className="max-w-3xl mx-auto space-y-8">
+            <div className="w-full max-w-5xl mx-auto space-y-8 text-center">
               {faqs.map((faq, index) => (
-                <Card key={index} className="border-0 shadow-lg">
+                <Card key={index} className="border-0 shadow-lg dark:bg-slate-800">
                   <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">{faq.question}</h3>
-                    <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">{faq.question}</h3>
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{faq.answer}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
             <div className="text-center mt-12">
-              <p className="text-gray-600 mb-4">Still have questions?</p>
-              <Button variant="outline" className="border-amber-300 hover:bg-amber-50">
+              <p className="text-gray-600 dark:text-gray-300 mb-4">Still have questions?</p>
+              <Button variant="outline" className="border-amber-300 dark:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20">
                 Contact Support
               </Button>
             </div>
@@ -346,8 +346,8 @@ export default function PricingPage() {
                 <Link href="/signup">
                   <Button
                     size="lg"
-                    variant="secondary"
-                    className="bg-white text-amber-600 hover:bg-gray-100 shadow-lg px-8 py-6 text-lg"
+                    variant="outline"
+                    className="bg-transparent border-white text-white hover:bg-white hover:text-amber-600 px-8 py-6 text-lg"
                   >
                     Get Started
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -357,7 +357,7 @@ export default function PricingPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-white text-white hover:bg-white/10 px-8 py-6 text-lg"
+                    className="bg-transparent border-white text-white hover:bg-white hover:text-amber-600 px-8 py-6 text-lg"
                   >
                     Sign In
                   </Button>

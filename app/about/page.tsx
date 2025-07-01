@@ -99,7 +99,7 @@ export default function AboutPage() {
               <Badge className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-700">
                 Our Story
               </Badge>
-              <h1 className="text-4xl font-bold tracking-tight sm:text-6xl text-gray-900 dark:text-gray-100">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                 Empowering Teachers,
                 <span className="block bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
                   Inspiring Students
@@ -116,7 +116,7 @@ export default function AboutPage() {
         {/* Mission Section */}
         <section className="w-full py-20 bg-white dark:bg-gray-800">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-12 lg:grid-cols-2 items-center">
+            <div className="grid gap-12 lg:grid-cols-2 items-center text-center">
               <div className="space-y-6">
                 <div className="space-y-4">
                   <Badge className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-700">
@@ -127,12 +127,12 @@ export default function AboutPage() {
                     <span className="block text-amber-600">Quality Resources</span>
                   </h2>
                 </div>
-                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed text-center lg:text-left">
                   At Lingualy, we believe that great teaching starts with great resources. Our mission is to provide
                   English educators worldwide with comprehensive, curriculum-aligned materials that save time, enhance
                   learning, and inspire both teachers and students.
                 </p>
-                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed text-center lg:text-left">
                   We understand the challenges teachers face - limited time, budget constraints, and the constant need
                   for fresh, engaging content. That's why we've created a platform that addresses these pain points
                   while maintaining the highest educational standards.
@@ -173,7 +173,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 w-full justify-items-center">
               {stats.map((stat, index) => (
                 <Card key={index} className="text-center border-0 shadow-lg bg-white dark:bg-gray-800">
                   <CardContent className="p-8">
@@ -198,7 +198,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 w-full justify-items-center">
               {values.map((value, index) => (
                 <Card
                   key={index}
@@ -229,7 +229,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 w-full justify-items-center">
               {team.map((member, index) => (
                 <Card
                   key={index}
@@ -269,7 +269,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-3 max-w-4xl mx-auto">
+            <div className="grid gap-8 md:grid-cols-3 w-full max-w-6xl mx-auto justify-items-center">
               <Card className="text-center border-0 shadow-lg bg-white dark:bg-gray-800">
                 <CardContent className="p-8">
                   <Mail className="h-12 w-12 text-amber-600 mx-auto mb-4" />
@@ -322,8 +322,8 @@ export default function AboutPage() {
                 <Link href="/signup">
                   <Button
                     size="lg"
-                    variant="secondary"
-                    className="bg-white text-amber-600 hover:bg-gray-100 shadow-lg px-8 py-6 text-lg"
+                    variant="outline"
+                    className="bg-transparent border-white text-white hover:bg-white hover:text-amber-600 px-8 py-6 text-lg"
                   >
                     Get Started Today
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -333,7 +333,7 @@ export default function AboutPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-white text-white hover:bg-white/10 px-8 py-6 text-lg"
+                    className="bg-transparent border-white text-white hover:bg-white hover:text-amber-600 px-8 py-6 text-lg"
                   >
                     Explore Lessons
                   </Button>

@@ -355,7 +355,7 @@ export default function HomePage() {
                   <span>{currentText.profile}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="px-4 py-3 cursor-pointer" onClick={handlePricingClick}>
-                  <DollarSign className="h-4 w-4 mr-3 text-gray-500 dark:text-gray-400" />
+                  <DollarSign className="h-4 w-4 mr-3 text-amber-600 dark:text-amber-400" />
                   <span>{currentText.pricing}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="px-4 py-3 cursor-pointer">
@@ -431,16 +431,16 @@ export default function HomePage() {
       </header>
 
       <main className="flex-1 p-6">
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="container space-y-8">
           {/* Welcome & Search Section */}
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-6 w-full">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{currentText.goodMorning}</h1>
-              <p className="text-xl text-gray-600 dark:text-gray-400">{currentText.whatToTeach}</p>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">{currentText.goodMorning}</h1>
+              <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">{currentText.whatToTeach}</p>
             </div>
 
             {/* Enhanced Search */}
-            <div className="max-w-4xl mx-auto">
+            <div className="w-full max-w-6xl mx-auto">
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-amber-100 dark:border-amber-800">
                 <div className="space-y-6">
                   <div className="relative">
@@ -450,17 +450,17 @@ export default function HomePage() {
                       placeholder={currentText.searchPlaceholder}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-14 h-16 text-lg border-2 border-gray-200 dark:border-gray-600 focus:border-amber-400 focus:ring-amber-400 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="pl-14 h-12 sm:h-16 text-base sm:text-lg border-2 border-gray-200 dark:border-gray-600 focus:border-amber-400 focus:ring-amber-400 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
-                    <Button className="absolute right-2 top-2 h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg">
-                      <Search className="h-5 w-5 mr-2" />
+                    <Button className="absolute right-2 top-2 h-8 sm:h-12 px-3 sm:px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-sm sm:text-base">
+                      <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                       {currentText.search}
                     </Button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-3">
                     <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                      <SelectTrigger className="h-12 border-gray-200 dark:border-gray-600 rounded-lg">
+                      <SelectTrigger className="h-10 sm:h-12 border-gray-200 dark:border-gray-600 rounded-lg text-sm sm:text-base">
                         <SelectValue placeholder={currentText.selectGrade} />
                       </SelectTrigger>
                       <SelectContent>
@@ -472,7 +472,7 @@ export default function HomePage() {
                     </Select>
 
                     <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                      <SelectTrigger className="h-12 border-gray-200 dark:border-gray-600 rounded-lg">
+                      <SelectTrigger className="h-10 sm:h-12 border-gray-200 dark:border-gray-600 rounded-lg text-sm sm:text-base">
                         <SelectValue placeholder={currentText.selectSubject} />
                       </SelectTrigger>
                       <SelectContent>
@@ -487,7 +487,7 @@ export default function HomePage() {
 
                     <Button
                       variant="outline"
-                      className="h-12 border-gray-200 dark:border-gray-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                      className="h-10 sm:h-12 border-gray-200 dark:border-gray-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-sm sm:text-base"
                     >
                       <Filter className="h-4 w-4 mr-2" />
                       {currentText.moreFilters}
@@ -495,18 +495,18 @@ export default function HomePage() {
                   </div>
 
                   {/* Recent Searches */}
-                  <div className="text-left">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <div className="text-center px-2">
+                    <h3 className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center justify-center gap-2">
                       <History className="h-4 w-4" />
                       {currentText.recentSearches}
                     </h3>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 justify-center">
                       {recentSearches.map((search, index) => (
                         <Button
                           key={index}
                           variant="outline"
                           size="sm"
-                          className="text-xs border-amber-200 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full"
+                          className="text-xs sm:text-sm border-amber-200 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full"
                         >
                           {search}
                         </Button>
@@ -519,7 +519,7 @@ export default function HomePage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-7xl mx-auto justify-items-center">
             {quickActions.map((action, index) => (
               <Card
                 key={index}
@@ -531,9 +531,9 @@ export default function HomePage() {
                   >
                     <action.icon className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-gray-100">{action.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{action.description}</p>
-                  <div className="flex items-center justify-center text-amber-600 font-medium group-hover:gap-3 gap-2 transition-all">
+                  <h3 className="text-base sm:text-lg font-bold mb-2 text-gray-900 dark:text-gray-100">{action.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-4">{action.description}</p>
+                  <div className="flex items-center justify-center text-amber-600 font-medium group-hover:gap-3 gap-2 transition-all text-sm sm:text-base">
                     <span>{currentText.getStarted}</span>
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -543,7 +543,7 @@ export default function HomePage() {
           </div>
 
           {/* Personal Stats */}
-          <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
+          <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 w-full max-w-7xl mx-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
                 <TrendingUp className="h-5 w-5 text-amber-600" />
@@ -554,14 +554,14 @@ export default function HomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
                 {personalStats.map((stat, index) => (
-                  <div key={index} className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div key={index} className="text-center p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
                       <stat.icon className="h-6 w-6 text-white" />
                     </div>
-                    <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{stat.value}</div>
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{stat.label}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{stat.value}</div>
+                    <div className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{stat.label}</div>
                     <div className="text-xs text-green-600">{stat.change}</div>
                   </div>
                 ))}
@@ -570,9 +570,9 @@ export default function HomePage() {
           </Card>
 
           {/* Main Content Grid */}
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="grid gap-8 lg:grid-cols-3 w-full max-w-7xl mx-auto justify-items-center">
             {/* Recommended Resources */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 text-center w-full">
               <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
@@ -606,8 +606,8 @@ export default function HomePage() {
                             {resource.subject}
                           </Badge>
                         </div>
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{resource.title}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{resource.description}</p>
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 text-sm sm:text-base">{resource.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">{resource.description}</p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -631,7 +631,7 @@ export default function HomePage() {
             </div>
 
             {/* Resource Categories */}
-            <div className="space-y-6">
+            <div className="space-y-6 text-center w-full">
               <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
                 <CardHeader>
                   <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{currentText.quickBrowse}</CardTitle>
@@ -651,11 +651,11 @@ export default function HomePage() {
                         <category.icon className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{category.title}</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">{category.title}</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{category.description}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-amber-600">{category.count}</div>
+                        <div className="text-base sm:text-lg font-bold text-amber-600">{category.count}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">available</div>
                       </div>
                     </div>

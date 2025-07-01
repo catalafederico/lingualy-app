@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import axios, { HttpStatusCode } from "axios"
 import { CheckCircle, XCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
@@ -15,7 +15,7 @@ enum Status {
     ERROR = "error"
 }
 
-export default function ConfirmEmailPage() {
+function ConfirmEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
@@ -105,5 +105,20 @@ export default function ConfirmEmailPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ConfirmEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-yellow-100 px-4">
+        <div className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl p-10 sm:p-12 md:p-16 text-center space-y-8">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-amber-600" />
+          <h2 className="text-3xl sm:text-4xl font-semibold text-gray-800">Loading...</h2>
+        </div>
+      </div>
+    }>
+      <ConfirmEmailContent />
+    </Suspense>
   )
 }
