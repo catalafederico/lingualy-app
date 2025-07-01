@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import Link from "next/link"
 import { Sparkles } from "lucide-react"
 
@@ -17,6 +18,7 @@ export default function Navbar() {
         </span>
       </Link>
       <nav className="ml-auto flex gap-6 items-center">
+        <ThemeToggle />
         {[
           { href: "/lessons", label: "Lessons" },
           { href: "/pricing", label: "Pricing" },
