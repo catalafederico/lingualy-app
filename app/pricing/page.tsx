@@ -1,16 +1,87 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Sparkles, Check, X, BookOpen, Users, Award, Clock, Star, ArrowRight, Zap } from "lucide-react"
+import { 
+  Sparkles,
+  Check, 
+  X, 
+  BookOpen, 
+  Users, 
+  Award, 
+  Clock, 
+  Star, 
+  ArrowRight, 
+  Zap
+} from "lucide-react"
 import Link from "next/link"
-import Navbar from "@/components/landing/Navbar"
+import { useRouter } from "next/navigation"
+import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
 
 export default function PricingPage() {
+  const router = useRouter()
   const [isAnnual, setIsAnnual] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [language, setLanguage] = useState<"en" | "es">("en")
+
+  // Check authentication on mount
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken")
+    setIsAuthenticated(!!accessToken)
+
+    // Initialize language
+    const savedLanguage = localStorage.getItem("language") as "en" | "es" | null
+    if (savedLanguage) {
+      setLanguage(savedLanguage)
+    }
+
+    setIsLoading(false)
+  }, [])
+
+
+  // Internationalization text
+  const t = {
+    en: {
+      lessons: "Lessons",
+      analytics: "Analytics",
+      profile: "Profile",
+      pricing: "Pricing",
+      documentation: "Documentation",
+      communityForum: "Community Forum",
+      feedback: "Feedback",
+      preferences: "Preferences",
+      theme: "Theme",
+      language: "Language",
+      signOut: "Sign Out",
+      light: "Light",
+      dark: "Dark",
+      english: "English",
+      spanish: "Spanish",
+    },
+    es: {
+      lessons: "Lecciones",
+      analytics: "Análisis",
+      profile: "Perfil",
+      pricing: "Precios",
+      documentation: "Documentación",
+      communityForum: "Foro de la Comunidad",
+      feedback: "Comentarios",
+      preferences: "Preferencias",
+      theme: "Tema",
+      language: "Idioma",
+      signOut: "Cerrar Sesión",
+      light: "Claro",
+      dark: "Oscuro",
+      english: "Inglés",
+      spanish: "Español",
+    },
+  }
+
+  const currentText = t[language]
 
   const plans = [
     {
@@ -113,11 +184,49 @@ export default function PricingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <Navbar />
+      {isAuthenticated ? (
+        <AuthenticatedNavbar currentPage="pricing" />
+      ) : (
+        // Non-authenticated Navigation
+        <header className="px-4 lg:px-6 h-20 flex items-center border-b bg-white/80 dark:bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 shadow-sm dark:border-gray-700">
+          <Link href="/" className="flex items-center justify-center">
+            <div className="relative">
+              <div className="h-10 w-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">L</span>
+              </div>
+            </div>
+            <span className="ml-3 text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+              Lingualy
+            </span>
+          </Link>
+          
+          <nav className="ml-auto flex gap-6 items-center">
+            {[
+              { href: "/lessons", label: "Lessons" },
+              { href: "/pricing", label: "Pricing" },
+              { href: "/about", label: "About" },
+              { href: "/login", label: "Login" },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium hover:text-amber-600 transition-colors text-gray-700 dark:text-gray-300"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link href="/sign-up">
+              <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 text-white">
+                Sign Up
+              </Button>
+            </Link>
+          </nav>
+        </header>
+      )}
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative w-full py-12 md:py-16 overflow-hidden">
+        <section className="relative w-full py-6 md:py-8 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"></div>
           <div className="absolute top-10 left-10 w-48 h-48 bg-amber-200 dark:bg-amber-600 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
           <div className="absolute top-20 right-10 w-48 h-48 bg-orange-200 dark:bg-orange-600 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
@@ -235,7 +344,7 @@ export default function PricingPage() {
             </div>
 
             {/* Enterprise CTA */}
-            <div className="mt-16 text-center">
+            <div className="mt-20 text-center">
               <Card className="max-w-2xl mx-auto border-2 border-amber-200 dark:border-amber-600 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 dark:bg-slate-800">
                 <CardContent className="p-8">
                   <div className="flex items-center justify-center mb-4">
