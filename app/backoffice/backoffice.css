@@ -1,0 +1,141 @@
+/* Backoffice specific styles to fix any layout issues */
+
+.backoffice-container {
+  @apply min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50;
+}
+
+.dark .backoffice-container {
+  @apply from-gray-900 via-gray-800 to-gray-900;
+}
+
+.backoffice-header {
+  @apply border-b bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm;
+}
+
+.dark .backoffice-header {
+  @apply bg-gray-900/90;
+}
+
+.backoffice-card {
+  @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+}
+
+.dark .backoffice-card {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.backoffice-card-hover {
+  @apply hover:shadow-md transition-shadow duration-200;
+}
+
+.backoffice-grid {
+  @apply grid gap-6;
+}
+
+.backoffice-grid-cols-4 {
+  @apply md:grid-cols-2 lg:grid-cols-4;
+}
+
+.backoffice-grid-cols-3 {
+  @apply lg:grid-cols-3;
+}
+
+.backoffice-main {
+  @apply container mx-auto px-4 lg:px-6 py-8 space-y-8;
+}
+
+.backoffice-text-primary {
+  @apply text-gray-900;
+}
+
+.dark .backoffice-text-primary {
+  @apply text-gray-100;
+}
+
+.backoffice-text-secondary {
+  @apply text-gray-600;
+}
+
+.dark .backoffice-text-secondary {
+  @apply text-gray-400;
+}
+
+.backoffice-text-muted {
+  @apply text-gray-500;
+}
+
+.dark .backoffice-text-muted {
+  @apply text-gray-400;
+}
+
+/* Progress bar styles */
+.backoffice-progress-bg {
+  @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.dark .backoffice-progress-bg {
+  @apply bg-gray-700;
+}
+
+.backoffice-progress-fill {
+  @apply bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full;
+}
+
+/* Button styles */
+.backoffice-button-primary {
+  @apply bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white;
+}
+
+.backoffice-button-outline {
+  @apply border-amber-300 hover:bg-amber-50;
+}
+
+.dark .backoffice-button-outline {
+  @apply hover:bg-amber-900/20;
+}
+
+/* Image placeholder */
+.backoffice-image-placeholder {
+  @apply bg-gray-200 rounded flex items-center justify-center;
+}
+
+.dark .backoffice-image-placeholder {
+  @apply bg-gray-700;
+}
+
+/* Hover states */
+.backoffice-hover-gray {
+  @apply hover:bg-gray-50 transition-colors cursor-pointer;
+}
+
+.dark .backoffice-hover-gray {
+  @apply hover:bg-gray-800;
+}
+
+/* Responsive text */
+.backoffice-responsive-text {
+  @apply text-sm font-medium;
+}
+
+@media (max-width: 640px) {
+  .backoffice-responsive-text {
+    @apply text-xs;
+  }
+}
+
+/* Fix any potential layout issues */
+.backoffice-fix-layout {
+  @apply relative;
+}
+
+.backoffice-fix-spacing {
+  @apply space-y-4;
+}
+
+.backoffice-fix-grid {
+  @apply grid gap-4;
+}
+
+.backoffice-fix-flex {
+  @apply flex items-center;
+}

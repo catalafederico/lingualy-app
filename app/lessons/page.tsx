@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getLessons, getFeaturedLessons, type Lesson, type LessonsResponse } from "@/services/lessons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -50,6 +51,9 @@ export default function LessonsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [language, setLanguage] = useState<"en" | "es">("en")
+  const [featuredLessons, setFeaturedLessons] = useState<Lesson[]>([])
+  const [lessonsData, setLessonsData] = useState<LessonsResponse | null>(null)
+  const [loadingLessons, setLoadingLessons] = useState(false)
 
   // Initialize theme, language, and check authentication on component mount
   useEffect(() => {
@@ -88,7 +92,49 @@ export default function LessonsPage() {
     }
 
     setIsLoading(false)
+    
+    // Load featured lessons
+    loadFeaturedLessons()
   }, [router])
+
+  const loadFeaturedLessons = async () => {
+    try {
+      const lessons = await getFeaturedLessons(6)
+      setFeaturedLessons(lessons)
+    } catch (error) {
+      console.error('Error loading featured lessons:', error)
+    }
+  }
+
+  const loadLessons = async () => {
+    setLoadingLessons(true)
+    try {
+      const params = {
+        page: 1,
+        limit: 20,
+        ...(searchTerm && { search: searchTerm }),
+        ...(selectedGrade && { grade: selectedGrade }),
+        ...(selectedSubject && { subject: selectedSubject }),
+      }
+      const data = await getLessons(params)
+      setLessonsData(data)
+    } catch (error) {
+      console.error('Error loading lessons:', error)
+    } finally {
+      setLoadingLessons(false)
+    }
+  }
+
+  const handleSearch = () => {
+    loadLessons()
+  }
+
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setSelectedGrade("")
+    setSelectedSubject("")
+    loadFeaturedLessons()
+  }
 
   // Handler functions
   const handleThemeChange = (newTheme: "light" | "dark") => {
@@ -203,80 +249,6 @@ export default function LessonsPage() {
     },
   ]
 
-  const featuredLessons = [
-    {
-      title: "Creative Writing: Character Development",
-      description: "Help students create compelling characters through guided exercises and prompts.",
-      grade: "6-8",
-      subject: "Writing",
-      duration: "45 min",
-      difficulty: "Intermediate",
-      rating: 4.9,
-      downloads: 2340,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Creative Writing", "Character", "Narrative"],
-    },
-    {
-      title: "Shakespeare's Romeo and Juliet: Act 1 Analysis",
-      description: "Comprehensive lesson plan for analyzing themes, characters, and language in Act 1.",
-      grade: "9-12",
-      subject: "Literature",
-      duration: "60 min",
-      difficulty: "Advanced",
-      rating: 4.8,
-      downloads: 1890,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Shakespeare", "Drama", "Analysis"],
-    },
-    {
-      title: "ESL Conversation Starters: Daily Routines",
-      description: "Interactive lesson to help ESL students practice talking about daily activities.",
-      grade: "Adult",
-      subject: "ESL",
-      duration: "30 min",
-      difficulty: "Beginner",
-      rating: 4.7,
-      downloads: 3120,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["ESL", "Conversation", "Daily Life"],
-    },
-    {
-      title: "Poetry Analysis: Metaphors and Similes",
-      description: "Teach students to identify and analyze figurative language in poetry.",
-      grade: "4-6",
-      subject: "Poetry",
-      duration: "40 min",
-      difficulty: "Intermediate",
-      rating: 4.9,
-      downloads: 2780,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Poetry", "Figurative Language", "Analysis"],
-    },
-    {
-      title: "Persuasive Writing: Building Strong Arguments",
-      description: "Step-by-step guide to help students construct compelling persuasive essays.",
-      grade: "7-9",
-      subject: "Writing",
-      duration: "50 min",
-      difficulty: "Intermediate",
-      rating: 4.8,
-      downloads: 2156,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Persuasive Writing", "Arguments", "Essays"],
-    },
-    {
-      title: "Reading Comprehension: Main Ideas and Details",
-      description: "Develop students' ability to identify main ideas and supporting details in texts.",
-      grade: "3-5",
-      subject: "Reading",
-      duration: "35 min",
-      difficulty: "Beginner",
-      rating: 4.6,
-      downloads: 4230,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Reading", "Comprehension", "Main Ideas"],
-    },
-  ]
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -455,7 +427,10 @@ export default function LessonsPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-12 pr-4 h-14 text-lg border-2 border-amber-200 dark:border-amber-700 focus:border-amber-400 focus:ring-amber-400 bg-white/80 dark:bg-gray-800/80 backdrop-blur text-gray-900 dark:text-gray-100"
                   />
-                  <Button className="absolute right-2 top-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                  <Button 
+                    onClick={handleSearch}
+                    className="absolute right-2 top-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                  >
                     Search
                   </Button>
                 </div>
@@ -539,6 +514,7 @@ export default function LessonsPage() {
 
                 <Button
                   variant="outline"
+                  onClick={handleClearFilters}
                   className="border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                 >
                   Clear Filters
@@ -548,27 +524,40 @@ export default function LessonsPage() {
           </div>
         </section>
 
-        {/* Featured Lessons */}
+        {/* Lessons Section */}
         <section className="w-full py-20 bg-white dark:bg-gray-800">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4 text-gray-900 dark:text-gray-100">
-                Featured Lesson Plans
+                {lessonsData ? 'Search Results' : 'Featured Lesson Plans'}
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Hand-picked lessons from our most popular and highly-rated content
+                {lessonsData 
+                  ? `Found ${lessonsData.total} lessons matching your criteria`
+                  : 'Hand-picked lessons from our most popular and highly-rated content'
+                }
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {featuredLessons.map((lesson, index) => (
+            {loadingLessons && (
+              <div className="text-center py-12">
+                <div className="inline-flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600"></div>
+                  <span className="text-gray-600 dark:text-gray-400">Loading lessons...</span>
+                </div>
+              </div>
+            )}
+
+            {!loadingLessons && (
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {(lessonsData?.lessons || featuredLessons).map((lesson, index) => (
                 <Card
                   key={index}
                   className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group bg-white dark:bg-gray-800"
                 >
                   <div className="relative overflow-hidden rounded-t-lg">
                     <img
-                      src={lesson.preview || "/placeholder.svg"}
+                      src={lesson.previewImage || "/placeholder.svg"}
                       alt={lesson.title}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -617,14 +606,16 @@ export default function LessonsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Preview
-                      </Button>
+                      <Link href={`/lessons/${lesson.id}`} className="flex-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </Button>
+                      </Link>
                       <Button size="sm" className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
                         <Download className="h-4 w-4 mr-2" />
                         Download
@@ -632,19 +623,29 @@ export default function LessonsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
-            <div className="text-center mt-12">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-              >
-                Load More Lessons
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </div>
+            {!loadingLessons && (lessonsData?.lessons || featuredLessons).length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-600 dark:text-gray-400">No lessons found matching your criteria.</p>
+              </div>
+            )}
+
+            {!loadingLessons && !lessonsData && (
+              <div className="text-center mt-12">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={loadLessons}
+                  className="border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                >
+                  Browse All Lessons
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
+            )}
           </div>
         </section>
 
