@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { isAdmin as checkIsAdmin, isAuthenticated as checkIsAuthenticated } from "@/lib/auth"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -137,6 +138,19 @@ export default function CreateLessonPage() {
   const [downloadFiles, setDownloadFiles] = useState<File[]>([])
   const [newFileName, setNewFileName] = useState("")
   const [showPreview, setShowPreview] = useState(false)
+
+  // Admin access check
+  useEffect(() => {
+    if (!checkIsAuthenticated()) {
+      router.push("/login")
+      return
+    }
+    
+    if (!checkIsAdmin()) {
+      router.push("/home")
+      return
+    }
+  }, [router])
 
   const {
     register,

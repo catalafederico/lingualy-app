@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import "./backoffice.css"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
 import {
   Sparkles,
   BookOpen,
@@ -18,37 +19,172 @@ import {
   Award,
   FileText,
   PenTool,
-  MessageCircle,
   Eye,
-  Heart,
-  Filter,
-  Bell,
-  Settings,
-  User,
-  LogOut,
-  ChevronDown,
+  Edit,
+  Trash2,
+  BarChart3,
   TrendingUp,
   Calendar,
+  Globe,
+  Shield,
+  Settings,
+  User,
+  Bell,
+  LogOut,
+  Filter,
+  ChevronDown,
+  MoreHorizontal,
 } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
+import { isAdmin as checkIsAdmin, isAuthenticated as checkIsAuthenticated } from "@/lib/auth"
 
-export default function BackofficePage() {
+// Mock admin stats data
+const adminStats = [
+  { 
+    label: "Total Lessons", 
+    value: "1,247", 
+    change: "+12%", 
+    icon: BookOpen, 
+    color: "text-blue-600",
+    bgColor: "bg-blue-50 dark:bg-blue-900/20"
+  },
+  { 
+    label: "Published This Month", 
+    value: "89", 
+    change: "+23%", 
+    icon: Globe, 
+    color: "text-green-600",
+    bgColor: "bg-green-50 dark:bg-green-900/20"
+  },
+  { 
+    label: "Total Downloads", 
+    value: "45.2K", 
+    change: "+8%", 
+    icon: Download, 
+    color: "text-purple-600",
+    bgColor: "bg-purple-50 dark:bg-purple-900/20"
+  },
+  { 
+    label: "Active Users", 
+    value: "3,156", 
+    change: "+15%", 
+    icon: Users, 
+    color: "text-amber-600",
+    bgColor: "bg-amber-50 dark:bg-amber-900/20"
+  },
+]
+
+// Mock draft lessons data
+const draftLessons = [
+  {
+    id: "draft-1",
+    title: "Advanced Grammar: Complex Sentences Structure",
+    description: "Master the art of writing complex sentences with proper punctuation.",
+    grade: "8-10",
+    subject: "Grammar",
+    lastEdited: "2 hours ago",
+    progress: 75,
+    createdBy: "Sarah Johnson",
+    status: "draft"
+  },
+  {
+    id: "draft-2", 
+    title: "Creative Writing: Building Suspense in Short Stories",
+    description: "Techniques for creating tension and engagement in narrative writing.",
+    grade: "6-8",
+    subject: "Creative Writing",
+    lastEdited: "1 day ago",
+    progress: 40,
+    createdBy: "Michael Chen",
+    status: "draft"
+  },
+  {
+    id: "draft-3",
+    title: "ESL Pronunciation: Common English Sounds",
+    description: "Help non-native speakers master difficult English phonemes.",
+    grade: "Adult",
+    subject: "ESL",
+    lastEdited: "3 days ago",
+    progress: 90,
+    createdBy: "Elena Rodriguez",
+    status: "draft"
+  },
+  {
+    id: "draft-4",
+    title: "Literature Analysis: Symbolism in Modern Poetry",
+    description: "Exploring symbolic elements in contemporary poetic works.",
+    grade: "9-12",
+    subject: "Literature",
+    lastEdited: "1 week ago",
+    progress: 25,
+    createdBy: "David Thompson",
+    status: "draft"
+  },
+]
+
+// Mock recent activity data
+const recentActivity = [
+  {
+    type: "publish",
+    lesson: "Poetry Analysis: Metaphors and Similes",
+    user: "Sarah Johnson",
+    time: "2 hours ago",
+    icon: Globe,
+    color: "text-green-600"
+  },
+  {
+    type: "create",
+    lesson: "ESL Conversation Practice: Job Interviews",
+    user: "Michael Chen", 
+    time: "4 hours ago",
+    icon: Plus,
+    color: "text-blue-600"
+  },
+  {
+    type: "edit",
+    lesson: "Shakespeare's Romeo and Juliet: Act 2",
+    user: "Elena Rodriguez",
+    time: "6 hours ago", 
+    icon: Edit,
+    color: "text-amber-600"
+  },
+  {
+    type: "delete",
+    lesson: "Outdated Grammar Rules",
+    user: "David Thompson",
+    time: "1 day ago",
+    icon: Trash2,
+    color: "text-red-600"
+  },
+]
+
+export default function BackofficeAdminPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedTab, setSelectedTab] = useState("overview")
 
   useEffect(() => {
     // Check authentication
-    const accessToken = localStorage.getItem("accessToken")
-    if (!accessToken) {
+    if (!checkIsAuthenticated()) {
       router.push("/login")
       return
     }
+
+    // Check admin privileges (only admins can access backoffice)
+    if (!checkIsAdmin()) {
+      // Redirect non-admin users to regular home page
+      router.push("/home")
+      return
+    }
+
     setIsAuthenticated(true)
+    setIsAdmin(true)
     setIsLoading(false)
 
     // Check for success message
@@ -56,161 +192,46 @@ export default function BackofficePage() {
     const published = searchParams.get("published") === "true"
     if (created || published) {
       setShowSuccessMessage(true)
-      // Remove the query parameter from URL after showing message
       router.replace("/backoffice")
-      // Hide message after 5 seconds
       setTimeout(() => setShowSuccessMessage(false), 5000)
     }
   }, [router, searchParams])
 
-  const recentLessons = [
-    {
-      title: "Creative Writing: Character Development",
-      subject: "Writing",
-      grade: "6-8",
-      lastAccessed: "2 hours ago",
-      progress: 85,
-      image: "/placeholder.svg?height=100&width=150",
-    },
-    {
-      title: "Shakespeare's Romeo and Juliet",
-      subject: "Literature",
-      grade: "9-12",
-      lastAccessed: "1 day ago",
-      progress: 60,
-      image: "/placeholder.svg?height=100&width=150",
-    },
-    {
-      title: "ESL Conversation Starters",
-      subject: "ESL",
-      grade: "Adult",
-      lastAccessed: "3 days ago",
-      progress: 100,
-      image: "/placeholder.svg?height=100&width=150",
-    },
-  ]
+  const handleEditDraft = (lessonId: string) => {
+    router.push(`/backoffice/create-lesson?draft=${lessonId}`)
+  }
 
-  const quickStats = [
-    { label: "Lessons Downloaded", value: "47", icon: Download, color: "text-blue-600" },
-    { label: "Hours Saved", value: "23", icon: Clock, color: "text-green-600" },
-    { label: "Favorite Lessons", value: "12", icon: Heart, color: "text-red-600" },
-    { label: "Students Reached", value: "156", icon: Users, color: "text-purple-600" },
-  ]
+  const handleDeleteDraft = (lessonId: string) => {
+    // TODO: Implement delete draft functionality
+    console.log("Delete draft:", lessonId)
+  }
 
-  const categories = [
-    {
-      icon: BookOpen,
-      title: "Reading Comprehension",
-      count: "1,200+ lessons",
-      color: "from-amber-500 to-orange-500",
-    },
-    {
-      icon: PenTool,
-      title: "Writing Skills",
-      count: "800+ lessons",
-      color: "from-orange-500 to-red-500",
-    },
-    {
-      icon: MessageCircle,
-      title: "Speaking & Listening",
-      count: "600+ lessons",
-      color: "from-yellow-500 to-amber-500",
-    },
-    {
-      icon: FileText,
-      title: "Grammar & Vocabulary",
-      count: "1,500+ lessons",
-      color: "from-amber-500 to-yellow-500",
-    },
-  ]
-
-  const featuredLessons = [
-    {
-      title: "Poetry Analysis: Metaphors and Similes",
-      description: "Teach students to identify and analyze figurative language in poetry.",
-      grade: "4-6",
-      subject: "Poetry",
-      rating: 4.9,
-      downloads: 2780,
-      image: "/placeholder.svg?height=120&width=200",
-      isNew: true,
-    },
-    {
-      title: "Persuasive Writing: Building Strong Arguments",
-      description: "Step-by-step guide to help students construct compelling persuasive essays.",
-      grade: "7-9",
-      subject: "Writing",
-      rating: 4.8,
-      downloads: 2156,
-      image: "/placeholder.svg?height=120&width=200",
-      isPopular: true,
-    },
-  ]
+  const filteredDrafts = draftLessons.filter(lesson =>
+    lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    lesson.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="text-center space-y-4">
           <Sparkles className="h-12 w-12 text-amber-600 animate-spin mx-auto" />
-          <p className="text-lg text-gray-600">Loading dashboard...</p>
+          <p className="text-lg text-gray-600 dark:text-gray-400">Loading admin dashboard...</p>
         </div>
       </div>
     )
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isAdmin) {
     return null
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header */}
-      <header className="border-b bg-white/80 dark:bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
-          <Link href="/home" className="flex items-center space-x-3">
-            <div className="relative">
-              <Sparkles className="h-8 w-8 text-amber-600" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-400 rounded-full animate-pulse"></div>
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-              Lingualy
-            </span>
-          </Link>
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <AuthenticatedNavbar />
 
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link
-              href="/lessons"
-              className="text-sm font-medium hover:text-amber-600 transition-colors text-gray-700 dark:text-gray-300"
-            >
-              Browse Lessons
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm font-medium hover:text-amber-600 transition-colors text-gray-700 dark:text-gray-300"
-            >
-              Upgrade
-            </Link>
-          </nav>
-
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-5 w-5" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Settings className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-white" />
-              </div>
-              <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300">Sarah J.</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 lg:px-6 py-8 space-y-8">
+      <main className="flex-1">
+        <div className="container mx-auto px-4 lg:px-6 py-8 space-y-8">
         {/* Success Message */}
         {showSuccessMessage && (
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">
@@ -225,44 +246,45 @@ export default function BackofficePage() {
               </h3>
               <p className="text-sm text-green-600 dark:text-green-300">
                 {searchParams.get("published") === "true" 
-                  ? "Your lesson has been published and is now live for students."
-                  : "Your new lesson has been saved as a draft."
+                  ? "The lesson is now live and available to all users."
+                  : "The lesson has been saved as a draft and can be edited later."
                 }
               </p>
             </div>
           </div>
         )}
 
-        {/* Welcome Section */}
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Welcome back, Sarah! 👋</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">Ready to create amazing lessons today?</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Admin Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Manage lessons, view analytics, and oversee platform content</p>
           </div>
           <div className="flex gap-3">
             <Link href="/backoffice/create-lesson">
               <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
                 <Plus className="h-4 w-4 mr-2" />
-                Create Lesson
+                Create New Lesson
               </Button>
             </Link>
             <Button variant="outline" className="border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20">
-              <Search className="h-4 w-4 mr-2" />
-              Search Resources
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Analytics
             </Button>
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {quickStats.map((stat, index) => (
+          {adminStats.map((stat, index) => (
             <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="flex items-center justify-between p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.label}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
+                  <p className={`text-sm font-medium ${stat.color}`}>{stat.change} from last month</p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <div className={`w-12 h-12 rounded-full ${stat.bgColor} flex items-center justify-center`}>
                   <stat.icon className={`h-6 w-6 ${stat.color}`} />
                 </div>
               </CardContent>
@@ -270,168 +292,212 @@ export default function BackofficePage() {
           ))}
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Left Column - Recent Activity */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Continue Learning */}
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="drafts" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+            <TabsTrigger value="drafts">Draft Lessons</TabsTrigger>
+            <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+
+          {/* Draft Lessons Tab */}
+          <TabsContent value="drafts" className="space-y-6">
+            <Card className="border-0 shadow-md">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Edit className="h-5 w-5 text-amber-600" />
+                      Draft Lessons ({filteredDrafts.length})
+                    </CardTitle>
+                    <CardDescription>Continue working on unpublished lessons</CardDescription>
+                  </div>
+                  <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search drafts..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {filteredDrafts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No draft lessons found</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      {searchQuery ? "Try adjusting your search criteria." : "Start by creating a new lesson."}
+                    </p>
+                    <Link href="/backoffice/create-lesson">
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Your First Lesson
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  filteredDrafts.map((lesson) => (
+                    <div
+                      key={lesson.id}
+                      className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/50 rounded-lg flex items-center justify-center">
+                        <Edit className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">{lesson.title}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{lesson.description}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">{lesson.grade}</Badge>
+                          <Badge variant="outline" className="text-xs">{lesson.subject}</Badge>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            By {lesson.createdBy} • {lesson.lastEdited}
+                          </span>
+                        </div>
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-600 dark:text-gray-400">Progress</span>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">{lesson.progress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full"
+                              style={{ width: `${lesson.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditDraft(lesson.id)}
+                          className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Continue
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteDraft(lesson.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Recent Activity Tab */}
+          <TabsContent value="activity" className="space-y-6">
             <Card className="border-0 shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-amber-600" />
-                  Continue Learning
+                  Recent Activity
                 </CardTitle>
-                <CardDescription>Pick up where you left off</CardDescription>
+                <CardDescription>Latest actions performed by admin users</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentLessons.map((lesson, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                  >
-                    <div className="w-15 h-10 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-gray-500" />
+                {recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    <div className={`w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center`}>
+                      <activity.icon className={`h-5 w-5 ${activity.color}`} />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{lesson.title}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {lesson.grade}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {lesson.subject}
-                        </Badge>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{lesson.lastAccessed}</span>
-                      </div>
-                      <div className="mt-2">
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        <span className="font-medium">{activity.user}</span>
+                        {" "}
+                        {activity.type === "publish" && "published"}
+                        {activity.type === "create" && "created"}
+                        {activity.type === "edit" && "edited"}
+                        {activity.type === "delete" && "deleted"}
+                        {" "}
+                        <span className="font-medium">"{activity.lesson}"</span>
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-amber-600" />
+                    Platform Growth
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">New Lessons This Month</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">89</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Total Downloads</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">45.2K</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Active Users</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">3,156</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Avg. Rating</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">4.7 ⭐</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-amber-600" />
+                    Popular Subjects
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { subject: "English Language Arts", count: "445 lessons", width: "90%" },
+                      { subject: "Writing", count: "287 lessons", width: "65%" },
+                      { subject: "ESL", count: "234 lessons", width: "55%" },
+                      { subject: "Literature", count: "156 lessons", width: "35%" },
+                      { subject: "Grammar", count: "125 lessons", width: "28%" },
+                    ].map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{item.subject}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.count}</span>
+                        </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div
                             className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full"
-                            style={{ width: `${lesson.progress}%` }}
-                          ></div>
+                            style={{ width: item.width }}
+                          />
                         </div>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{lesson.progress}% complete</span>
                       </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    ))}
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Featured Lessons */}
-            <Card className="border-0 shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-amber-600" />
-                  Featured This Week
-                </CardTitle>
-                <CardDescription>Hand-picked lessons just for you</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-6 md:grid-cols-2">
-                  {featuredLessons.map((lesson, index) => (
-                    <div key={index} className="group cursor-pointer">
-                      <div className="relative overflow-hidden rounded-lg mb-3 bg-gray-200 dark:bg-gray-700 h-32 flex items-center justify-center">
-                        <FileText className="h-12 w-12 text-gray-400" />
-                        <div className="absolute top-2 right-2">
-                          {lesson.isNew && <Badge className="bg-green-500 text-white text-xs">New</Badge>}
-                          {lesson.isPopular && <Badge className="bg-red-500 text-white text-xs">Popular</Badge>}
-                        </div>
-                      </div>
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{lesson.title}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{lesson.description}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {lesson.grade}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {lesson.subject}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span>{lesson.rating}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Quick Actions & Categories */}
-          <div className="space-y-8">
-            {/* Quick Search */}
-            <Card className="border-0 shadow-md">
-              <CardHeader>
-                <CardTitle className="text-lg">Quick Search</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search lessons, topics..."
-                    className="pl-10 border-amber-200 focus:border-amber-400"
-                  />
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" className="text-xs">
-                    <Filter className="h-3 w-3 mr-1" />
-                    Grade 6-8
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    Writing
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Browse Categories */}
-            <Card className="border-0 shadow-md">
-              <CardHeader>
-                <CardTitle className="text-lg">Browse Categories</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {categories.map((category, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                  >
-                    <div
-                      className={`w-10 h-10 bg-gradient-to-br ${category.color} rounded-lg flex items-center justify-center`}
-                    >
-                      <category.icon className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{category.title}</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{category.count}</p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Upgrade Prompt */}
-            <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
-              <CardContent className="text-center p-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Award className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Unlock Premium</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Get access to advanced features and unlimited downloads
-                </p>
-                <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                  Upgrade Now
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
         </div>
       </main>
     </div>

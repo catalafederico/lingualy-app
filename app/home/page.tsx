@@ -34,6 +34,7 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { isAuthenticated as checkIsAuthenticated } from "@/lib/auth"
 
 export default function HomePage() {
   const router = useRouter()
@@ -50,8 +51,7 @@ export default function HomePage() {
 
   // Check authentication and initialize language on component mount
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken")
-    if (!accessToken) {
+    if (!checkIsAuthenticated()) {
       router.push("/login")
       return
     }

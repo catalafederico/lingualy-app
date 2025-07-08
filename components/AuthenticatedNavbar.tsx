@@ -22,9 +22,12 @@ import {
   HelpCircle,
   Sun,
   Moon,
+  Shield,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { isAdmin } from "@/lib/auth"
+import { logoutUser } from "@/services/auth/logout"
 
 interface AuthenticatedNavbarProps {
   currentPage?: 'home' | 'pricing' | 'profile' | 'lessons'
@@ -69,9 +72,15 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
     router.push("/profile")
   }
 
-  const handleSignOut = () => {
-    localStorage.removeItem("accessToken")
-    router.push("/login")
+  const handleSignOut = async () => {
+    try {
+      await logoutUser()
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      // Always redirect to login regardless of API call result
+      router.push("/login")
+    }
   }
 
   // Internationalization text
@@ -150,6 +159,17 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
           {currentText.pricing}
         </Link>
         
+        {/* Admin Backoffice Link */}
+        {isAdmin() && (
+          <Link
+            href="/backoffice"
+            className="text-sm font-medium hover:text-amber-600 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-1"
+          >
+            <Shield className="h-4 w-4" />
+            Backoffice
+          </Link>
+        )}
+        
         {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -164,7 +184,15 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
           <DropdownMenuContent className="w-80 p-0" align="end">
             {/* User Info */}
             <div className="px-4 py-3 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">sarah.johnson@school.edu</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">sarah.johnson@school.edu</p>
+                {isAdmin() && (
+                  <div className="flex items-center gap-1 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-2 py-1 rounded-full text-xs">
+                    <Shield className="h-3 w-3" />
+                    Admin
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Menu Items */}
