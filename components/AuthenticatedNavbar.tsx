@@ -28,15 +28,18 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/auth"
 import { logoutUser } from "@/services/auth/logout"
+import { getUserProfile, type UserProfile } from "@/services/auth/user-profile"
 
 interface AuthenticatedNavbarProps {
-  currentPage?: 'home' | 'pricing' | 'profile' | 'lessons'
+  currentPage?: 'home' | 'pricing' | 'profile' | 'lessons' | 'backoffice'
 }
 
 export default function AuthenticatedNavbar({ currentPage = 'home' }: AuthenticatedNavbarProps) {
   const router = useRouter()
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [language, setLanguage] = useState<"en" | "es">("en")
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
 
   // Initialize theme and language on component mount
   useEffect(() => {
@@ -51,6 +54,22 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
     if (savedLanguage) {
       setLanguage(savedLanguage)
     }
+
+    // Fetch user profile data
+    const fetchUserProfile = async () => {
+      try {
+        setIsLoadingUser(true)
+        const profile = await getUserProfile()
+        setUserProfile(profile)
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error)
+        // Keep userProfile as null, will show fallback
+      } finally {
+        setIsLoadingUser(false)
+      }
+    }
+
+    fetchUserProfile()
   }, [])
 
   const handleThemeChange = (newTheme: "light" | "dark") => {
@@ -163,7 +182,11 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
         {isAdmin() && (
           <Link
             href="/backoffice"
-            className="text-sm font-medium hover:text-amber-600 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-1"
+            className={`text-sm font-medium hover:text-amber-600 transition-colors flex items-center gap-1 ${
+              currentPage === 'backoffice' 
+                ? 'text-amber-600 dark:text-amber-400' 
+                : 'text-gray-700 dark:text-gray-300'
+            }`}
           >
             <Shield className="h-4 w-4" />
             Backoffice
@@ -177,7 +200,9 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
               <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center">
                 <User className="h-4 w-4 text-white" />
               </div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sarah J.</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {isLoadingUser ? 'Loading...' : userProfile ? `${userProfile.firstName} ${userProfile.lastName?.[0]}.` : 'User'}
+              </span>
               <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
             </Button>
           </DropdownMenuTrigger>
@@ -185,7 +210,9 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
             {/* User Info */}
             <div className="px-4 py-3 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">sarah.johnson@school.edu</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {isLoadingUser ? 'Loading...' : userProfile?.email || 'No email available'}
+                </p>
                 {isAdmin() && (
                   <div className="flex items-center gap-1 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-2 py-1 rounded-full text-xs">
                     <Shield className="h-3 w-3" />

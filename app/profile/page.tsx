@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,17 +20,21 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { getUserProfile, type UserProfile } from "@/services/auth/user-profile"
+import { isAuthenticated as checkIsAuthenticated } from "@/lib/auth"
 
 export default function ProfilePage() {
   const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
 
   const [profileData, setProfileData] = useState({
-    firstName: "Sarah",
-    lastName: "Johnson",
-    email: "sarah.johnson@school.edu",
-    phone: "+1 (555) 123-4567",
-    location: "San Francisco, CA",
-    country: "United States",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    location: "",
+    country: "",
   })
 
   const countries = [
@@ -49,6 +53,37 @@ export default function ProfilePage() {
 
   const [isLoading, setIsLoading] = useState(false)
 
+  // Check authentication and fetch user data
+  useEffect(() => {
+    if (!checkIsAuthenticated()) {
+      router.push("/login")
+      return
+    }
+
+    setIsAuthenticated(true)
+    setIsLoadingAuth(false)
+
+    // Fetch user profile data
+    const fetchUserProfile = async () => {
+      try {
+        const profile = await getUserProfile()
+        setProfileData({
+          firstName: profile.firstName || "",
+          lastName: profile.lastName || "",
+          email: profile.email || "",
+          phone: profile.phone || "",
+          location: "", // Not in API response
+          country: profile.country || "",
+        })
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error)
+        // Keep empty strings as fallback
+      }
+    }
+
+    fetchUserProfile()
+  }, [router])
+
   const handleInputChange = (field: string, value: string) => {
     setProfileData((prev) => ({ ...prev, [field]: value }))
   }
@@ -60,6 +95,23 @@ export default function ProfilePage() {
     console.log("Profile saved:", { profileData })
     setIsLoading(false)
     // Show success message or redirect
+  }
+
+  // Show loading screen while checking authentication
+  if (isLoadingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="text-center space-y-4">
+          <Sparkles className="h-12 w-12 text-amber-600 animate-spin mx-auto" />
+          <p className="text-lg text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null
   }
 
   return (

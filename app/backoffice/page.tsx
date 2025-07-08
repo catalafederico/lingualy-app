@@ -228,7 +228,7 @@ export default function BackofficeAdminPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <AuthenticatedNavbar />
+      <AuthenticatedNavbar currentPage="backoffice" />
 
       <main className="flex-1">
         <div className="container mx-auto px-4 lg:px-6 py-8 space-y-8">

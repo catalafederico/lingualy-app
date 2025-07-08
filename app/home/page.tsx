@@ -35,6 +35,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { isAuthenticated as checkIsAuthenticated } from "@/lib/auth"
+import { getUserProfile, type UserProfile } from "@/services/auth/user-profile"
 
 export default function HomePage() {
   const router = useRouter()
@@ -46,6 +47,7 @@ export default function HomePage() {
   const [language, setLanguage] = useState<"en" | "es">("en")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   const lessonsPerPage = 6
 
@@ -63,13 +65,29 @@ export default function HomePage() {
       setLanguage(savedLanguage)
     }
 
+    // Fetch user profile data
+    const fetchUserProfile = async () => {
+      try {
+        const profile = await getUserProfile()
+        setUserProfile(profile)
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error)
+        // Keep userProfile as null, will show fallback
+      }
+    }
+
+    fetchUserProfile()
     setIsLoading(false)
   }, [router])
 
   // Internationalization text
+  const getUserName = () => {
+    return userProfile?.firstName || "there"
+  }
+
   const t = {
     en: {
-      goodMorning: "Good morning, Sarah! ☀️",
+      goodMorning: `Good morning, ${getUserName()}! ☀️`,
       whatToTeach: "What would you like to teach today?",
       searchPlaceholder: "Search for lesson plans, worksheets, activities...",
       search: "Search",
@@ -105,7 +123,7 @@ export default function HomePage() {
       spanish: "Spanish",
     },
     es: {
-      goodMorning: "¡Buenos días, Sarah! ☀️",
+      goodMorning: `¡Buenos días, ${getUserName()}! ☀️`,
       whatToTeach: "¿Qué te gustaría enseñar hoy?",
       searchPlaceholder: "Buscar planes de lección, hojas de trabajo, actividades...",
       search: "Buscar",
