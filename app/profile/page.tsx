@@ -20,7 +20,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { getUserProfile, type UserProfile } from "@/services/auth/user-profile"
+import { getUserProfile, updateUserProfile, type UserProfile, type UpdateUserProfileData } from "@/services/auth/user-profile"
 import { isAuthenticated as checkIsAuthenticated } from "@/lib/auth"
 
 export default function ProfilePage() {
@@ -52,6 +52,8 @@ export default function ProfilePage() {
   ]
 
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Check authentication and fetch user data
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function ProfilePage() {
           lastName: profile.lastName || "",
           email: profile.email || "",
           phone: profile.phone || "",
-          location: "", // Not in API response
+          location: profile.location || "",
           country: profile.country || "",
         })
       } catch (error) {
@@ -89,12 +91,55 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
+    // Clear previous messages
+    setError(null)
+    setSuccessMessage(null)
+
+    // Basic validation
+    if (!profileData.firstName.trim() || !profileData.lastName.trim() || !profileData.email.trim()) {
+      setError("First name, last name, and email are required.")
+      return
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(profileData.email)) {
+      setError("Please enter a valid email address.")
+      return
+    }
+
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Profile saved:", { profileData })
-    setIsLoading(false)
-    // Show success message or redirect
+    
+    try {
+      const updateData: UpdateUserProfileData = {
+        firstName: profileData.firstName.trim(),
+        lastName: profileData.lastName.trim(),
+        email: profileData.email.trim(),
+        phone: profileData.phone.trim(),
+        location: profileData.location.trim(),
+        country: profileData.country
+      }
+
+      await updateUserProfile(updateData)
+      setSuccessMessage("Profile updated successfully!")
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (error: any) {
+      console.error('Failed to update profile:', error)
+      if (error.response?.status === 400) {
+        setError("Invalid profile data. Please check your input and try again.")
+      } else if (error.response?.status === 401) {
+        setError("You are not authorized to update this profile. Please log in again.")
+        router.push("/login")
+      } else if (error.response?.status === 422) {
+        setError("Validation error. Please check your input fields.")
+      } else {
+        setError("Failed to update profile. Please try again later.")
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Show loading screen while checking authentication
@@ -146,6 +191,40 @@ export default function ProfilePage() {
             <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100">Profile Settings</h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Manage your personal information and account details</p>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-red-800 dark:text-red-200">Error</h3>
+                  <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-green-800 dark:text-green-200">Success</h3>
+                  <p className="text-sm text-green-600 dark:text-green-300">{successMessage}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Unified Profile Form */}
           <div className="max-w-2xl mx-auto">
