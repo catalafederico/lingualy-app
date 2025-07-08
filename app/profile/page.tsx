@@ -258,7 +258,7 @@ export default function ProfilePage() {
                         value={profileData.country}
                         onValueChange={(value) => handleInputChange("country", value)}
                       >
-                        <SelectTrigger className="w-full h-11 pl-10 border-gray-200 dark:border-gray-600 focus:border-amber-500 focus:ring-amber-500 bg-white dark:bg-gray-700">
+                        <SelectTrigger className="w-full h-[44px] pl-10 border-gray-200 dark:border-gray-600 focus:border-amber-500 focus:ring-amber-500 bg-white dark:bg-gray-700 !h-[44px] min-h-[44px] max-h-[44px]">
                           <SelectValue placeholder="Select your country" />
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
