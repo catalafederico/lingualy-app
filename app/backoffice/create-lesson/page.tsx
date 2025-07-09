@@ -38,18 +38,21 @@ import {
   MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
-import { createLesson, CreateLessonData } from "@/services/lessons/create-lesson"
+import { useSearchParams } from "next/navigation"
+import { createLesson, createLessonWithFiles, updateLessonWithFiles, getLessonById, CreateLessonData } from "@/services/lessons/create-lesson"
 import type { LessonProcedure } from "@/services/lessons/get-lessons"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
+import { toast } from "@/lib/toast"
 
-const lessonSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+// Draft schema - very minimal validation, allow saving incomplete lessons
+const draftSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
   fullDescription: z.string().optional(),
-  grade: z.string().min(1, "Grade is required"),
-  subject: z.string().min(1, "Subject is required"),
-  duration: z.string().min(1, "Duration is required"),
-  difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).optional(),
+  grade: z.string().optional(),
+  subject: z.string().optional(),
+  duration: z.string().optional(),
+  difficulty: z.enum(["Beginner", "Intermediate", "HARD"]).optional(),
   tags: z.array(z.string()).optional(),
   objectives: z.array(z.string()).optional(),
   materials: z.array(z.string()).optional(),
@@ -72,6 +75,41 @@ const lessonSchema = z.object({
   })).optional(),
   isPremium: z.boolean().optional(),
 })
+
+// Publish schema - strict validation, all required fields must be present
+const publishSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  fullDescription: z.string().optional(),
+  grade: z.string().min(1, "Grade is required"),
+  subject: z.string().min(1, "Subject is required"),
+  duration: z.string().min(1, "Duration is required"),
+  difficulty: z.enum(["Beginner", "Intermediate", "HARD"]).optional(),
+  tags: z.array(z.string()).optional(),
+  objectives: z.array(z.string()).optional(),
+  materials: z.array(z.string()).optional(),
+  procedures: z.array(z.object({
+    title: z.string(),
+    duration: z.string(),
+    description: z.string()
+  })).optional(),
+  assessment: z.array(z.string()).optional(),
+  lessonActivities: z.array(z.object({
+    skill: z.string(),
+    description: z.string()
+  })).optional(),
+  previewImage: z.string().optional(),
+  downloadFiles: z.array(z.object({
+    name: z.string(),
+    type: z.string(),
+    size: z.string(),
+    url: z.string().optional()
+  })).optional(),
+  isPremium: z.boolean().optional(),
+})
+
+// Default to draft schema for form validation
+const lessonSchema = draftSchema
 
 type LessonFormData = z.infer<typeof lessonSchema>
 
@@ -122,8 +160,16 @@ const durations = [
 
 export default function CreateLessonPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editId = searchParams.get('edit')
+  
+  // Core state
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitType, setSubmitType] = useState<'draft' | 'publish'>('draft')
+  const [isLoadingLesson, setIsLoadingLesson] = useState(false)
+  const [currentLessonId, setCurrentLessonId] = useState<number | null>(editId ? parseInt(editId) : null)
+  
+  // Form input state
   const [newTag, setNewTag] = useState("")
   const [newObjective, setNewObjective] = useState("")
   const [newMaterial, setNewMaterial] = useState("")
@@ -133,11 +179,15 @@ export default function CreateLessonPage() {
   const [newAssessment, setNewAssessment] = useState("")
   const [newActivitySkill, setNewActivitySkill] = useState("")
   const [newActivityDescription, setNewActivityDescription] = useState("")
+  const [showPreview, setShowPreview] = useState(false)
+  
+  // File handling state
   const [previewImageFile, setPreviewImageFile] = useState<File | null>(null)
   const [previewImageUrl, setPreviewImageUrl] = useState<string>("")
   const [downloadFiles, setDownloadFiles] = useState<File[]>([])
-  const [newFileName, setNewFileName] = useState("")
-  const [showPreview, setShowPreview] = useState(false)
+  const [existingFiles, setExistingFiles] = useState<any[]>([])
+  const [removedFileIds, setRemovedFileIds] = useState<string[]>([])
+  const [coverImageChanged, setCoverImageChanged] = useState(false)
 
   // Admin access check
   useEffect(() => {
@@ -152,12 +202,58 @@ export default function CreateLessonPage() {
     }
   }, [router])
 
+  // Load existing lesson data when editing
+  useEffect(() => {
+    if (currentLessonId && !isLoadingLesson) {
+      loadExistingLesson()
+    }
+  }, [currentLessonId])
+
+  const loadExistingLesson = async () => {
+    if (!currentLessonId) return
+    
+    try {
+      setIsLoadingLesson(true)
+      const lesson = await getLessonById(currentLessonId)
+      
+      // Populate form with existing data
+      setValue('title', lesson.title)
+      setValue('description', lesson.description)
+      setValue('fullDescription', lesson.fullDescription || '')
+      setValue('grade', lesson.grade)
+      setValue('subject', lesson.subject)
+      setValue('duration', lesson.duration)
+      setValue('difficulty', lesson.difficulty as "Beginner" | "Intermediate" | "HARD")
+      setValue('tags', lesson.tags || [])
+      setValue('objectives', lesson.objectives || [])
+      setValue('materials', lesson.materials || [])
+      setValue('procedures', lesson.procedures || [])
+      setValue('assessment', lesson.assessment || [])
+      setValue('lessonActivities', lesson.lessonActivities || [])
+      setValue('isPremium', lesson.isPremium)
+      
+      // Handle existing files
+      setExistingFiles(lesson.downloadFiles || [])
+      
+      if (lesson.previewImage) {
+        setPreviewImageUrl(lesson.previewImage)
+      }
+      
+    } catch (error) {
+      console.error('Error loading lesson:', error)
+      toast.error('Error loading lesson', 'Failed to load lesson data. Please try again.')
+    } finally {
+      setIsLoadingLesson(false)
+    }
+  }
+
   const {
     register,
     handleSubmit,
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<LessonFormData>({
     resolver: zodResolver(lessonSchema),
@@ -261,43 +357,33 @@ export default function CreateLessonPage() {
     const file = event.target.files?.[0]
     if (file) {
       setPreviewImageFile(file)
+      setCoverImageChanged(true)
       const imageUrl = URL.createObjectURL(file)
       setPreviewImageUrl(imageUrl)
-      setValue("previewImage", imageUrl)
+      // Don't set form value - we'll send file directly
     }
   }
 
   const removePreviewImage = () => {
     setPreviewImageFile(null)
+    setCoverImageChanged(true)
     setPreviewImageUrl("")
-    setValue("previewImage", "")
+    // Don't set form value - we'll handle this in submission
   }
 
   const handleDownloadFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
     setDownloadFiles(prev => [...prev, ...files])
-    
-    const fileData = files.map(file => ({
-      name: file.name,
-      type: file.type || "application/octet-stream",
-      size: formatFileSize(file.size),
-      url: URL.createObjectURL(file)
-    }))
-    
-    setValue("downloadFiles", [...watchedDownloadFiles, ...fileData])
+    // Don't set form value - we'll send files directly
   }
 
   const removeDownloadFile = (index: number) => {
-    const newFiles = downloadFiles.filter((_, i) => i !== index)
-    setDownloadFiles(newFiles)
-    setValue("downloadFiles", watchedDownloadFiles.filter((_, i) => i !== index))
+    setDownloadFiles(prev => prev.filter((_, i) => i !== index))
   }
 
-  const updateDownloadFileName = (index: number, newName: string) => {
-    const updatedFiles = watchedDownloadFiles.map((file, i) => 
-      i === index ? { ...file, name: newName } : file
-    )
-    setValue("downloadFiles", updatedFiles)
+  const removeExistingFile = (fileId: string) => {
+    setRemovedFileIds(prev => [...prev, fileId])
+    setExistingFiles(prev => prev.filter(f => f.url !== fileId))
   }
 
   const formatFileSize = (bytes: number): string => {
@@ -310,9 +396,9 @@ export default function CreateLessonPage() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "EASY":
+      case "Beginner":
         return "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
-      case "MEDIUM":
+      case "Intermediate":
         return "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300"
       case "HARD":
         return "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
@@ -325,39 +411,137 @@ export default function CreateLessonPage() {
     setShowPreview(true)
   }
 
+  // Toast helper functions
+  const showSuccessToast = (type: 'draft' | 'publish', isUpdate: boolean) => {
+    if (type === 'draft') {
+      toast.success(isUpdate ? 'Draft updated successfully!' : 'Draft saved successfully!', 
+        'Your lesson has been saved and can be edited later.')
+    } else {
+      toast.success(isUpdate ? 'Lesson updated and published!' : 'Lesson published successfully!', 
+        'Your lesson is now available to students.')
+    }
+  }
+
+  const showErrorToast = (error: any, type: 'draft' | 'publish') => {
+    const action = type === 'draft' ? 'saving draft' : 'publishing lesson'
+    toast.error(`Error ${action}`, error.message || 'Please check your input and try again.')
+  }
+
   const onSubmit = async (data: LessonFormData, type: 'draft' | 'publish' = 'draft') => {
     try {
       setIsSubmitting(true)
       setSubmitType(type)
-      const lessonData: CreateLessonData = {
-        ...data,
-        tags: data.tags?.filter(tag => tag.trim()) || [],
-        objectives: data.objectives?.filter(obj => obj.trim()) || [],
-        materials: data.materials?.filter(mat => mat.trim()) || [],
-        procedures: data.procedures?.filter(proc => 
-          proc.title.trim() && proc.duration.trim() && proc.description.trim()) || [],
-        assessment: data.assessment?.filter(ass => ass.trim()) || [],
-        lessonActivities: data.lessonActivities?.filter(activity => 
-          activity.skill.trim() && activity.description.trim()) || [],
-        previewImage: data.previewImage || "",
-        downloadFiles: data.downloadFiles || [],
-        isPremium: data.isPremium || false,
-        isNew: type === 'publish',
+
+      // Validate against appropriate schema based on submission type
+      if (type === 'publish') {
+        try {
+          publishSchema.parse(data)
+        } catch (validationError) {
+          if (validationError instanceof z.ZodError) {
+            // Show first validation error
+            const firstError = validationError.errors[0]
+            toast.error("Validation Error", `${firstError.path.join('.')}: ${firstError.message}`)
+            return
+          }
+        }
       }
-      
-      await createLesson(lessonData)
+
+      // Prepare lesson data (exclude file fields)
+      const lessonData = {
+        title: data.title || '',
+        description: data.description || '',
+        fullDescription: data.fullDescription || '',
+        grade: data.grade || '',
+        subject: data.subject || '',
+        duration: data.duration || '',
+        difficulty: data.difficulty,
+        tags: data.tags?.filter(tag => tag?.trim()) || [],
+        objectives: data.objectives?.filter(obj => obj?.trim()) || [],
+        materials: data.materials?.filter(mat => mat?.trim()) || [],
+        procedures: data.procedures?.filter(proc => 
+          proc?.title?.trim() && proc?.duration?.trim() && proc?.description?.trim()) || [],
+        assessment: data.assessment?.filter(ass => ass?.trim()) || [],
+        lessonActivities: data.lessonActivities?.filter(activity => 
+          activity?.skill?.trim() && activity?.description?.trim()) || [],
+        isPremium: data.isPremium || false,
+        action: type === 'publish' ? 'publish' : 'save',
+      }
+
+      let result
+      const isUpdate = !!currentLessonId
+
+      if (isUpdate) {
+        // Update existing lesson
+        result = await updateLessonWithFiles(
+          currentLessonId!,
+          lessonData,
+          coverImageChanged ? previewImageFile : undefined,
+          downloadFiles,
+          removedFileIds
+        )
+      } else {
+        // Create new lesson
+        result = await createLessonWithFiles(
+          lessonData,
+          previewImageFile || undefined,
+          downloadFiles
+        )
+        
+        // Update URL and state with new lesson ID
+        setCurrentLessonId(result.id)
+        window.history.replaceState(null, '', `/backoffice/create-lesson?edit=${result.id}`)
+      }
+
+      // Show success toast
+      showSuccessToast(type, isUpdate)
+
+      // Reset file tracking state
+      setDownloadFiles([])
+      setRemovedFileIds([])
+      setCoverImageChanged(false)
+      setPreviewImageFile(null)
+
+      // Navigate back to backoffice with success message
       const message = type === 'publish' ? 'published=true' : 'created=true'
       router.push(`/backoffice?${message}`)
+
     } catch (error) {
-      console.error("Error creating lesson:", error)
-      // TODO: Add proper error handling/toast
+      console.error("Error saving lesson:", error)
+      showErrorToast(error, type)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleSaveDraft = handleSubmit((data) => onSubmit(data, 'draft'))
+  // For draft, bypass form validation and get raw form data
+  const handleSaveDraft = async () => {
+    const formData = getValues()
+    await onSubmit(formData, 'draft')
+  }
+  
+  // For publish, use form validation
   const handlePublish = handleSubmit((data) => onSubmit(data, 'publish'))
+
+  // Loading state
+  if (isLoadingLesson) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <AuthenticatedNavbar currentPage="lessons" />
+        <main className="flex-1 container mx-auto px-4 lg:px-6 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading lesson data...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Button disabled state
+  const buttonsDisabled = isSubmitting || isLoadingLesson
+  const canSave = watch("title") && watch("description") && watch("grade") && watch("subject") && watch("duration")
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -373,8 +557,12 @@ export default function CreateLessonPage() {
                 <Sparkles className="h-8 w-8 text-amber-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Create New Lesson</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Build engaging content for your students</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {currentLessonId ? 'Edit Lesson' : 'Create New Lesson'}
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {currentLessonId ? 'Update your lesson content' : 'Build engaging content for your students'}
+                </p>
               </div>
             </div>
           </div>
@@ -393,6 +581,7 @@ export default function CreateLessonPage() {
                 onClick={handlePreview}
                 variant="outline" 
                 size="sm" 
+                disabled={buttonsDisabled}
                 className="gap-1 sm:gap-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 <Eye className="h-4 w-4" />
@@ -400,7 +589,7 @@ export default function CreateLessonPage() {
               </Button>
               <Button 
                 onClick={handleSaveDraft}
-                disabled={isSubmitting}
+                disabled={buttonsDisabled}
                 variant="outline"
                 size="sm"
                 className="gap-1 sm:gap-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -411,7 +600,7 @@ export default function CreateLessonPage() {
               </Button>
               <Button 
                 onClick={handlePublish}
-                disabled={isSubmitting}
+                disabled={buttonsDisabled || !canSave}
                 size="sm"
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white gap-1 sm:gap-2"
               >
@@ -613,13 +802,13 @@ export default function CreateLessonPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="difficulty">Difficulty Level</Label>
-                  <Select onValueChange={(value) => setValue("difficulty", value as "EASY" | "MEDIUM" | "HARD")}>
+                  <Select onValueChange={(value) => setValue("difficulty", value as "Beginner" | "Intermediate" | "HARD")}>
                     <SelectTrigger className="w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="EASY">Easy</SelectItem>
-                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="Beginner">Beginner</SelectItem>
+                      <SelectItem value="Intermediate">Intermediate</SelectItem>
                       <SelectItem value="HARD">Hard</SelectItem>
                     </SelectContent>
                   </Select>
@@ -943,13 +1132,36 @@ export default function CreateLessonPage() {
               
               {/* Files List */}
               <div className="space-y-3">
-                {watchedDownloadFiles.map((file, index) => (
-                  <div key={index} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
+                {/* Existing Files */}
+                {existingFiles.map((file, index) => (
+                  <div key={`existing-${index}`} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-gray-500" />
+                      <FileText className="h-5 w-5 text-blue-600" />
                       <div className="flex-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Original: {file.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{file.type} • {file.size}</p>
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{file.name}</p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">{file.type} • {file.size}</p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400">Existing file</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeExistingFile(file.url)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* New Files */}
+                {downloadFiles.map((file, index) => (
+                  <div key={`new-${index}`} className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-green-600" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-900 dark:text-green-100">{file.name}</p>
+                        <p className="text-xs text-green-700 dark:text-green-300">{file.type} • {formatFileSize(file.size)}</p>
+                        <p className="text-xs text-green-600 dark:text-green-400">New file</p>
                       </div>
                       <button
                         type="button"
@@ -958,19 +1170,6 @@ export default function CreateLessonPage() {
                       >
                         <X className="h-4 w-4" />
                       </button>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`file-name-${index}`} className="text-sm font-medium">Display Name</Label>
-                      <Input
-                        id={`file-name-${index}`}
-                        placeholder="Enter custom file name (optional)"
-                        defaultValue={file.name}
-                        onChange={(e) => updateDownloadFileName(index, e.target.value || file.name)}
-                        className="bg-white dark:bg-gray-600 border-gray-200 dark:border-gray-500"
-                      />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Leave empty to use original name. This name will be shown to users.
-                      </p>
                     </div>
                   </div>
                 ))}
@@ -1014,8 +1213,8 @@ export default function CreateLessonPage() {
                 <div className="absolute top-4 right-4">
                   {watch("difficulty") && (
                     <Badge className={getDifficultyColor(watch("difficulty"))}>
-                      {watch("difficulty") === "EASY" ? "Beginner" : 
-                       watch("difficulty") === "MEDIUM" ? "Intermediate" : 
+                      {watch("difficulty") === "Beginner" ? "Beginner" : 
+                       watch("difficulty") === "Intermediate" ? "Intermediate" : 
                        watch("difficulty") === "HARD" ? "Advanced" : 
                        watch("difficulty")}
                     </Badge>

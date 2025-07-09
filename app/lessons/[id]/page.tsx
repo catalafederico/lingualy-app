@@ -84,10 +84,10 @@ export default function LessonDetailPage() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Beginner":
-      case "EASY":
+      case "Beginner":
         return "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
       case "Intermediate":
-      case "MEDIUM":
+      case "Intermediate":
         return "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300"
       case "Advanced":
       case "HARD":
@@ -157,8 +157,8 @@ export default function LessonDetailPage() {
                   />
                   <div className="absolute top-4 right-4">
                     <Badge className={getDifficultyColor(lesson.difficulty)}>
-                      {lesson.difficulty === "EASY" ? "Beginner" : 
-                       lesson.difficulty === "MEDIUM" ? "Intermediate" : 
+                      {lesson.difficulty === "Beginner" ? "Beginner" : 
+                       lesson.difficulty === "Intermediate" ? "Intermediate" : 
                        lesson.difficulty === "HARD" ? "Advanced" : 
                        lesson.difficulty}
                     </Badge>
