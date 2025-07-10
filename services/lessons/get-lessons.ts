@@ -86,71 +86,32 @@ export interface LessonsResponse {
 }
 
 export const getLessons = async (params?: LessonQueryParams): Promise<LessonsResponse> => {
-  // Temporary mock data - replace with real API call when backend is ready
-  // const response = await axios.get('/lessons', { params })
-  // return response.data
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  // Filter mock data based on params
-  let filteredLessons = [...mockLessons]
-  
-  if (params?.search) {
-    const searchTerm = params.search.toLowerCase()
-    filteredLessons = filteredLessons.filter(lesson => 
-      lesson.title.toLowerCase().includes(searchTerm) ||
-      lesson.description.toLowerCase().includes(searchTerm) ||
-      lesson.tags?.some(tag => tag.toLowerCase().includes(searchTerm))
-    )
-  }
-  
-  if (params?.category) {
-    filteredLessons = filteredLessons.filter(lesson => 
-      lesson.category.toLowerCase() === params.category?.toLowerCase()
-    )
-  }
-  
-  if (params?.level) {
-    filteredLessons = filteredLessons.filter(lesson => 
-      lesson.level.toLowerCase() === params.level?.toLowerCase()
-    )
-  }
-  
-  if (params?.isNew !== undefined) {
-    filteredLessons = filteredLessons.filter(lesson => lesson.isNew === params.isNew)
-  }
-  
-  if (params?.isPremium !== undefined) {
-    filteredLessons = filteredLessons.filter(lesson => lesson.isPremium === params.isPremium)
-  }
-  
-  // Apply pagination
-  const page = params?.page || 1
-  const limit = params?.limit || 10
-  const startIndex = (page - 1) * limit
-  const endIndex = startIndex + limit
-  const paginatedLessons = filteredLessons.slice(startIndex, endIndex)
-  
-  return {
-    lessons: paginatedLessons,
-    total: filteredLessons.length,
-    page,
-    limit,
-    totalPages: Math.ceil(filteredLessons.length / limit)
+  try {
+    const response = await axios.get('/lessons', { params })
+    return response.data
+  } catch (error: any) {
+    // Handle specific error types
+    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+      throw new Error('Network connection failed. Please check your internet connection and try again.')
+    }
+    
+    if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.')
+    }
+    
+    if (error.response?.status === 403) {
+      throw new Error('Permission denied. You do not have access to view lessons.')
+    }
+    
+    if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.')
+    }
+    
+    // Generic error fallback
+    throw new Error(error.response?.data?.message || 'Failed to load lessons. Please try again.')
   }
 }
 
-export const getFeaturedLessons = async (limit = 6): Promise<Lesson[]> => {
-  // Temporary mock data - replace with real API call when backend is ready
-  // const response = await axios.get('/lessons/featured', { params: { limit } })
-  // return response.data
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300))
-  
-  return mockFeaturedLessons.slice(0, limit)
-}
 
 export const getLessonById = async (id: number): Promise<Lesson> => {
   try {
@@ -176,43 +137,5 @@ export const getLessonById = async (id: number): Promise<Lesson> => {
   }
 }
 
-export const getMyLessons = async (): Promise<Lesson[]> => {
-  // Temporary mock data - replace with real API call when backend is ready
-  // const response = await axios.get('/lessons/my-lessons')
-  // return response.data
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 400))
-  
-  // Return lessons from current user (mock user id 1)
-  return mockLessons.filter(lesson => lesson.author.id === 1)
-}
 
-export const getLessonsByAuthor = async (authorId: number): Promise<Lesson[]> => {
-  // Temporary mock data - replace with real API call when backend is ready
-  // const response = await axios.get(`/lessons/author/${authorId}`)
-  // return response.data
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300))
-  
-  return mockLessons.filter(lesson => lesson.author.id === authorId)
-}
 
-export const searchLessonsByTags = async (tags: string[]): Promise<Lesson[]> => {
-  // Temporary mock data - replace with real API call when backend is ready
-  // const response = await axios.get('/lessons/search/tags', {
-  //   params: { tags: tags.join(',') }
-  // })
-  // return response.data
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 400))
-  
-  const lowerCaseTags = tags.map(tag => tag.toLowerCase())
-  return mockLessons.filter(lesson => 
-    lesson.tags?.some(tag => 
-      lowerCaseTags.some(searchTag => tag.toLowerCase().includes(searchTag))
-    )
-  )
-}

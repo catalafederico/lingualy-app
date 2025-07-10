@@ -36,20 +36,67 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { isAuthenticated as checkIsAuthenticated } from "@/lib/auth"
 import { getUserProfile, type UserProfile } from "@/services/auth/user-profile"
+import { getLessons, type LessonsResponse, type LessonQueryParams } from "@/services/lessons/get-lessons"
+import { CEFR_LEVELS, LESSON_CATEGORIES } from "@/lib/constants"
 
 export default function HomePage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedGrades, setSelectedGrades] = useState<string[]>([])
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
-  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([])
+  const [selectedLevels, setSelectedLevels] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [language, setLanguage] = useState<"en" | "es">("en")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [lessons, setLessons] = useState<LessonsResponse>({ lessons: [], total: 0, page: 1, limit: 6, totalPages: 0 })
+  const [isLoadingLessons, setIsLoadingLessons] = useState(false)
 
   const lessonsPerPage = 6
+
+  // Function to fetch lessons from API
+  const fetchLessons = async () => {
+    setIsLoadingLessons(true)
+    try {
+      // Build search term that includes filters for enhanced search
+      let enhancedSearch = searchTerm || ''
+      
+      // Add selected categories and levels to search if available
+      if (selectedCategories.length > 0 || selectedLevels.length > 0) {
+        const searchTerms = [enhancedSearch]
+        
+        // Add categories to search
+        selectedCategories.forEach(category => {
+          if (category) searchTerms.push(category)
+        })
+        
+        // Add levels to search  
+        selectedLevels.forEach(level => {
+          if (level) searchTerms.push(level)
+        })
+        
+        enhancedSearch = searchTerms.filter(term => term.trim()).join(' ')
+      }
+      
+      const params: LessonQueryParams = {
+        page: currentPage,
+        limit: lessonsPerPage,
+        search: enhancedSearch || undefined,
+        // Still pass individual filters for backend to use if it supports them
+        category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
+        level: selectedLevels.length > 0 ? selectedLevels[0] : undefined,
+      }
+      
+      const response = await getLessons(params)
+      setLessons(response)
+    } catch (error) {
+      console.error('Failed to fetch lessons:', error)
+      // Set empty state on error
+      setLessons({ lessons: [], total: 0, page: 1, limit: lessonsPerPage, totalPages: 0 })
+    } finally {
+      setIsLoadingLessons(false)
+    }
+  }
 
   // Check authentication and initialize language on component mount
   useEffect(() => {
@@ -77,8 +124,16 @@ export default function HomePage() {
     }
 
     fetchUserProfile()
+    fetchLessons()
     setIsLoading(false)
   }, [router])
+
+  // Fetch lessons when filters or pagination change
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchLessons()
+    }
+  }, [currentPage, searchTerm, selectedLevels, selectedCategories, isAuthenticated])
 
   // Internationalization text
   const getUserName = () => {
@@ -208,129 +263,6 @@ export default function HomePage() {
     { label: "Students Impacted", value: "156", icon: Target, change: "+12 this month" },
   ]
 
-  const allLessons = [
-    {
-      id: "1",
-      title: "Creative Writing: Character Development",
-      description: "Help students create compelling characters through guided exercises and prompts.",
-      grade: "6-8",
-      subject: "Writing",
-      duration: "45 min",
-      difficulty: "Intermediate",
-      rating: 4.9,
-      downloads: 2340,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Creative Writing", "Character", "Narrative"],
-      isNew: true,
-      isPremium: false,
-    },
-    {
-      id: "2",
-      title: "Shakespeare's Romeo and Juliet: Act 1 Analysis",
-      description: "Comprehensive lesson plan for analyzing themes, characters, and language in Act 1.",
-      grade: "9-12",
-      subject: "Literature",
-      duration: "60 min",
-      difficulty: "Advanced",
-      rating: 4.8,
-      downloads: 1890,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Shakespeare", "Drama", "Analysis"],
-      isNew: false,
-      isPremium: true,
-    },
-    {
-      id: "3",
-      title: "ESL Conversation Starters: Daily Routines",
-      description: "Interactive lesson to help ESL students practice talking about daily activities.",
-      grade: "Adult",
-      subject: "ESL",
-      duration: "30 min",
-      difficulty: "Beginner",
-      rating: 4.7,
-      downloads: 3120,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["ESL", "Conversation", "Daily Life"],
-      isNew: false,
-      isPremium: false,
-    },
-    {
-      id: "4",
-      title: "Poetry Analysis: Metaphors and Similes",
-      description: "Teach students to identify and analyze figurative language in poetry.",
-      grade: "4-6",
-      subject: "Poetry",
-      duration: "40 min",
-      difficulty: "Intermediate",
-      rating: 4.9,
-      downloads: 2780,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Poetry", "Figurative Language", "Analysis"],
-      isNew: false,
-      isPremium: true,
-    },
-    {
-      id: "5",
-      title: "Persuasive Writing: Building Strong Arguments",
-      description: "Step-by-step guide to help students construct compelling persuasive essays.",
-      grade: "7-9",
-      subject: "Writing",
-      duration: "50 min",
-      difficulty: "Intermediate",
-      rating: 4.8,
-      downloads: 2156,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Persuasive Writing", "Arguments", "Essays"],
-      isNew: false,
-      isPremium: false,
-    },
-    {
-      id: "6",
-      title: "Reading Comprehension: Main Ideas and Details",
-      description: "Develop students' ability to identify main ideas and supporting details in texts.",
-      grade: "3-5",
-      subject: "Reading",
-      duration: "35 min",
-      difficulty: "Beginner",
-      rating: 4.6,
-      downloads: 4230,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Reading", "Comprehension", "Main Ideas"],
-      isNew: false,
-      isPremium: false,
-    },
-    {
-      id: "7",
-      title: "Advanced Grammar: Complex Sentences",
-      description: "Master the art of writing complex sentences with proper punctuation and structure.",
-      grade: "8-10",
-      subject: "Grammar",
-      duration: "55 min",
-      difficulty: "Advanced",
-      rating: 4.7,
-      downloads: 1567,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Grammar", "Sentences", "Writing"],
-      isNew: true,
-      isPremium: false,
-    },
-    {
-      id: "8",
-      title: "Vocabulary Building Through Context Clues",
-      description: "Teach students to decode unknown words using context and structural analysis.",
-      grade: "5-7",
-      subject: "Reading",
-      duration: "40 min",
-      difficulty: "Intermediate",
-      rating: 4.6,
-      downloads: 2890,
-      preview: "/placeholder.svg?height=200&width=300",
-      tags: ["Vocabulary", "Context Clues", "Reading"],
-      isNew: false,
-      isPremium: true,
-    },
-  ]
-
   const resourceCategories = [
     {
       icon: BookOpen,
@@ -363,12 +295,16 @@ export default function HomePage() {
   ]
 
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
+  const getLevelColor = (level: string) => {
+    switch (level) {
       case "Beginner":
         return "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+      case "Pre-intermediate":
+        return "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
       case "Intermediate":
         return "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300"
+      case "Upper-intermediate":
+        return "bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300"
       case "Advanced":
         return "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
       default:
@@ -376,61 +312,33 @@ export default function HomePage() {
     }
   }
 
-  const handleGradeChange = (grade: string, checked: boolean) => {
+  const handleLevelChange = (level: string, checked: boolean) => {
     if (checked) {
-      setSelectedGrades([...selectedGrades, grade])
+      setSelectedLevels([...selectedLevels, level])
     } else {
-      setSelectedGrades(selectedGrades.filter(g => g !== grade))
+      setSelectedLevels(selectedLevels.filter(l => l !== level))
     }
   }
 
-  const handleSubjectChange = (subject: string, checked: boolean) => {
+  const handleCategoryChange = (category: string, checked: boolean) => {
     if (checked) {
-      setSelectedSubjects([...selectedSubjects, subject])
+      setSelectedCategories([...selectedCategories, category])
     } else {
-      setSelectedSubjects(selectedSubjects.filter(s => s !== subject))
-    }
-  }
-
-  const handleDifficultyChange = (difficulty: string, checked: boolean) => {
-    if (checked) {
-      setSelectedDifficulties([...selectedDifficulties, difficulty])
-    } else {
-      setSelectedDifficulties(selectedDifficulties.filter(d => d !== difficulty))
+      setSelectedCategories(selectedCategories.filter(c => c !== category))
     }
   }
 
   const clearAllFilters = () => {
     setSearchTerm("")
-    setSelectedGrades([])
-    setSelectedSubjects([])
-    setSelectedDifficulties([])
+    setSelectedLevels([])
+    setSelectedCategories([])
     setCurrentPage(1)
   }
-
-  const filteredLessons = allLessons.filter((lesson) => {
-    const matchesSearch = searchTerm === "" || 
-      lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lesson.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lesson.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    
-    const matchesGrade = selectedGrades.length === 0 || selectedGrades.includes(lesson.grade)
-    const matchesSubject = selectedSubjects.length === 0 || selectedSubjects.includes(lesson.subject)
-    const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(lesson.difficulty)
-    
-    return matchesSearch && matchesGrade && matchesSubject && matchesDifficulty
-  })
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredLessons.length / lessonsPerPage)
-  const startIndex = (currentPage - 1) * lessonsPerPage
-  const endIndex = startIndex + lessonsPerPage
-  const paginatedLessons = filteredLessons.slice(startIndex, endIndex)
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, selectedGrades, selectedSubjects, selectedDifficulties])
+  }, [searchTerm, selectedLevels, selectedCategories])
 
   const goToPage = (page: number) => {
     setCurrentPage(page)
@@ -445,7 +353,7 @@ export default function HomePage() {
   }
 
   const goToNextPage = () => {
-    if (currentPage < totalPages) {
+    if (currentPage < lessons.totalPages) {
       goToPage(currentPage + 1)
     }
   }
@@ -500,69 +408,46 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Grade Level Filters */}
+                  {/* Level Filters */}
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Grade Level</h3>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Levels</h3>
                     <div className="space-y-2">
-                      {["3-5", "4-6", "5-7", "6-8", "7-9", "8-10", "9-12", "Adult"].map((grade) => (
-                        <div key={grade} className="flex items-center space-x-2">
+                      {CEFR_LEVELS.map((level) => (
+                        <div key={level.value} className="flex items-center space-x-2">
                           <Checkbox
-                            id={`grade-${grade}`}
-                            checked={selectedGrades.includes(grade)}
-                            onCheckedChange={(checked) => handleGradeChange(grade, checked as boolean)}
+                            id={`level-${level.value}`}
+                            checked={selectedLevels.includes(level.value)}
+                            onCheckedChange={(checked) => handleLevelChange(level.value, checked as boolean)}
                             className="border-gray-300 dark:border-gray-600"
                           />
                           <label
-                            htmlFor={`grade-${grade}`}
+                            htmlFor={`level-${level.value}`}
                             className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
                           >
-                            {grade === "Adult" ? "Adult/ESL" : `Grade ${grade}`}
+                            {level.label}
                           </label>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Subject Filters */}
+                  {/* Category Filters */}
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Subject</h3>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Category</h3>
                     <div className="space-y-2">
-                      {["Reading", "Writing", "Grammar", "Literature", "Poetry", "ESL"].map((subject) => (
-                        <div key={subject} className="flex items-center space-x-2">
+                      {LESSON_CATEGORIES.map((category) => (
+                        <div key={category.value} className="flex items-center space-x-2">
                           <Checkbox
-                            id={`subject-${subject}`}
-                            checked={selectedSubjects.includes(subject)}
-                            onCheckedChange={(checked) => handleSubjectChange(subject, checked as boolean)}
+                            id={`category-${category.value}`}
+                            checked={selectedCategories.includes(category.value)}
+                            onCheckedChange={(checked) => handleCategoryChange(category.value, checked as boolean)}
                             className="border-gray-300 dark:border-gray-600"
                           />
                           <label
-                            htmlFor={`subject-${subject}`}
+                            htmlFor={`category-${category.value}`}
                             className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
                           >
-                            {subject}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Difficulty Filters */}
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Difficulty</h3>
-                    <div className="space-y-2">
-                      {["Beginner", "Intermediate", "Advanced"].map((difficulty) => (
-                        <div key={difficulty} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`difficulty-${difficulty}`}
-                            checked={selectedDifficulties.includes(difficulty)}
-                            onCheckedChange={(checked) => handleDifficultyChange(difficulty, checked as boolean)}
-                            className="border-gray-300 dark:border-gray-600"
-                          />
-                          <label
-                            htmlFor={`difficulty-${difficulty}`}
-                            className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
-                          >
-                            {difficulty}
+                            {category.label}
                           </label>
                         </div>
                       ))}
@@ -584,11 +469,11 @@ export default function HomePage() {
                   {/* Results Summary */}
                   <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-600">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {filteredLessons.length} lessons found
+                      {lessons.total} lessons found
                     </p>
-                    {totalPages > 1 && (
+                    {lessons.totalPages > 1 && (
                       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        Page {currentPage} of {totalPages}
+                        Page {currentPage} of {lessons.totalPages}
                       </p>
                     )}
                   </div>
@@ -598,22 +483,29 @@ export default function HomePage() {
 
             {/* Right Content - Lesson Results */}
             <div className="flex-1" id="lesson-results">
-              {filteredLessons.length > 0 ? (
+              {isLoadingLessons ? (
+                <div className="text-center py-16">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-600 dark:text-gray-400">
+                    Loading lessons...
+                  </p>
+                </div>
+              ) : lessons.lessons.length > 0 ? (
                 <>
                   <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {paginatedLessons.map((lesson, index) => (
+                    {lessons.lessons.map((lesson) => (
                     <Card
-                      key={index}
+                      key={lesson.id}
                       className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group bg-white dark:bg-gray-800"
                     >
                       <div className="relative overflow-hidden rounded-t-lg">
                         <img
-                          src={lesson.preview || "/placeholder.svg"}
+                          src={lesson.coverImage?.publicUrl || "/placeholder.svg"}
                           alt={lesson.title}
                           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute top-4 right-4">
-                          <Badge className={getDifficultyColor(lesson.difficulty)}>{lesson.difficulty}</Badge>
+                          <Badge className={getLevelColor(lesson.level)}>{lesson.level}</Badge>
                         </div>
                         <div className="absolute top-4 left-4 flex flex-col gap-2">
                           {lesson.isNew && (
@@ -628,10 +520,10 @@ export default function HomePage() {
                       <CardHeader className="pb-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Badge variant="outline" className="text-xs">
-                            {lesson.grade}
+                            {lesson.level}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
-                            {lesson.subject}
+                            {lesson.category}
                           </Badge>
                         </div>
                         <CardTitle className="text-lg leading-tight text-gray-900 dark:text-gray-100">
@@ -657,7 +549,7 @@ export default function HomePage() {
                         </div>
 
                         <div className="flex flex-wrap gap-1 mb-4">
-                          {lesson.tags.map((tag, tagIndex) => (
+                          {lesson.tags?.map((tag, tagIndex) => (
                             <Badge key={tagIndex} variant="secondary" className="text-xs">
                               {tag}
                             </Badge>
@@ -686,7 +578,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Pagination */}
-                  {totalPages > 1 && (
+                  {lessons.totalPages > 1 && (
                     <div className="flex justify-center items-center mt-12 space-x-2">
                       <Button
                         variant="outline"
@@ -700,11 +592,11 @@ export default function HomePage() {
                       </Button>
 
                       <div className="flex space-x-1">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        {Array.from({ length: lessons.totalPages }, (_, i) => i + 1).map((page) => {
                           // Show first page, last page, current page, and pages around current
                           const showPage = 
                             page === 1 || 
-                            page === totalPages || 
+                            page === lessons.totalPages || 
                             Math.abs(page - currentPage) <= 1
 
                           if (!showPage && page === 2 && currentPage > 4) {
@@ -715,7 +607,7 @@ export default function HomePage() {
                             )
                           }
 
-                          if (!showPage && page === totalPages - 1 && currentPage < totalPages - 3) {
+                          if (!showPage && page === lessons.totalPages - 1 && currentPage < lessons.totalPages - 3) {
                             return (
                               <span key={page} className="px-2 py-1 text-gray-400">
                                 ...
@@ -747,7 +639,7 @@ export default function HomePage() {
                         variant="outline"
                         size="sm"
                         onClick={goToNextPage}
-                        disabled={currentPage === totalPages}
+                        disabled={currentPage === lessons.totalPages}
                         className="border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Next

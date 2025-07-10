@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getLessons, getFeaturedLessons, type Lesson, type LessonsResponse } from "@/services/lessons"
+import { getLessons, type Lesson, type LessonsResponse } from "@/services/lessons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -51,7 +51,6 @@ export default function LessonsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [language, setLanguage] = useState<"en" | "es">("en")
-  const [featuredLessons, setFeaturedLessons] = useState<Lesson[]>([])
   const [lessonsData, setLessonsData] = useState<LessonsResponse | null>(null)
   const [loadingLessons, setLoadingLessons] = useState(false)
 
@@ -93,18 +92,9 @@ export default function LessonsPage() {
 
     setIsLoading(false)
     
-    // Load featured lessons
-    loadFeaturedLessons()
+    // Load initial lessons
+    loadLessons()
   }, [router])
-
-  const loadFeaturedLessons = async () => {
-    try {
-      const lessons = await getFeaturedLessons(6)
-      setFeaturedLessons(lessons)
-    } catch (error) {
-      console.error('Error loading featured lessons:', error)
-    }
-  }
 
   const loadLessons = async () => {
     setLoadingLessons(true)
@@ -550,7 +540,7 @@ export default function LessonsPage() {
 
             {!loadingLessons && (
               <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {(lessonsData?.lessons || featuredLessons).map((lesson, index) => (
+                {(lessonsData?.lessons || []).map((lesson, index) => (
                 <Card
                   key={index}
                   className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group bg-white dark:bg-gray-800"
@@ -627,7 +617,7 @@ export default function LessonsPage() {
               </div>
             )}
 
-            {!loadingLessons && (lessonsData?.lessons || featuredLessons).length === 0 && (
+            {!loadingLessons && (lessonsData?.lessons || []).length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-600 dark:text-gray-400">No lessons found matching your criteria.</p>
               </div>
