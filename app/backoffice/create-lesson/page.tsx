@@ -455,6 +455,25 @@ export default function CreateLessonPage() {
     }
   }
 
+  // Download new (local) file function
+  const handleNewFileDownload = (file: File) => {
+    try {
+      const url = URL.createObjectURL(file)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = file.name
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url) // Clean up memory
+      toast.success('Download started', `Downloading ${file.name}`)
+    } catch (error: any) {
+      console.error('Download error:', error)
+      toast.error('Download failed', 'Failed to download the file')
+    }
+  }
+
   const getLevelColor = (level: string) => {
     switch (level) {
       case "Beginner":
@@ -1242,18 +1261,25 @@ export default function CreateLessonPage() {
                 
                 {/* New Files */}
                 {downloadFiles.map((file, index) => (
-                  <div key={`new-${index}`} className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div 
+                    key={`new-${index}`} 
+                    className="relative p-4 bg-green-50 dark:bg-green-900/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors"
+                    onClick={() => handleNewFileDownload(file)}
+                  >
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-green-600" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-green-900 dark:text-green-100">{file.name}</p>
                         <p className="text-xs text-green-700 dark:text-green-300">{file.type} • {formatFileSize(file.size)}</p>
-                        <p className="text-xs text-green-600 dark:text-green-400">New file</p>
+                        <p className="text-xs text-green-600 dark:text-green-400">New file - Click to download</p>
                       </div>
                       <button
                         type="button"
-                        onClick={() => removeDownloadFile(index)}
-                        className="text-red-500 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeDownloadFile(index)
+                        }}
+                        className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20"
                       >
                         <X className="h-4 w-4" />
                       </button>
