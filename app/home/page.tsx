@@ -527,7 +527,7 @@ export default function HomePage() {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-1 mb-4">
+                        <div className="flex flex-wrap gap-1 mb-4 min-h-[24px]">
                           {lesson.tags?.map((tag, tagIndex) => (
                             <Badge key={tagIndex} variant="secondary" className="text-xs">
                               {tag}
