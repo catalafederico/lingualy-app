@@ -20,10 +20,9 @@ export interface CreateLessonData {
   title: string;
   description: string;
   fullDescription?: string;
-  grade: string;
-  subject: string;
+  level: string;
+  category: string;
   duration: string;
-  difficulty?: string;
   previewImage?: string;
   tags?: string[];
   isNew?: boolean;
@@ -32,7 +31,7 @@ export interface CreateLessonData {
   materials?: string[];
   procedures?: LessonProcedure[];
   assessment?: string[];
-  lessonActivities?: LessonActivity[];
+  activities?: LessonActivity[];
   downloadFiles?: LessonDownloadFile[];
   action?: 'save' | 'publish';
 }
@@ -51,13 +50,20 @@ export const createLesson = async (data: CreateLessonData): Promise<Lesson> => {
     title: data.title,
     description: data.description,
     fullDescription: data.fullDescription || "",
-    grade: data.grade,
-    subject: data.subject,
+    level: data.level,
+    category: data.category,
     duration: data.duration,
-    difficulty: data.difficulty || "Intermediate",
     rating: 0,
     downloads: 0,
-    previewImage: data.previewImage || "/placeholder.svg?height=200&width=300",
+    coverImage: data.previewImage ? {
+      originalName: "cover.jpg",
+      mimeType: "image/jpeg",
+      sizeInBytes: 1024,
+      width: 300,
+      height: 200,
+      publicUrl: data.previewImage,
+      uploadedAt: new Date().toISOString()
+    } : undefined,
     tags: data.tags || [],
     isNew: data.isNew || true,
     isPremium: data.isPremium || false,
@@ -65,7 +71,7 @@ export const createLesson = async (data: CreateLessonData): Promise<Lesson> => {
     materials: data.materials || [],
     procedures: data.procedures || [],
     assessment: data.assessment || [],
-    lessonActivities: data.lessonActivities || [],
+    activities: data.activities || [],
     downloadFiles: data.downloadFiles || [],
     viewCount: 0,
     favoriteCount: 0,
@@ -98,10 +104,9 @@ export const createLessonWithFiles = async (
     if (lessonData.title !== undefined) formData.append('title', lessonData.title)
     if (lessonData.description !== undefined) formData.append('description', lessonData.description)
     if (lessonData.fullDescription !== undefined) formData.append('fullDescription', lessonData.fullDescription)
-    if (lessonData.grade !== undefined) formData.append('grade', lessonData.grade)
-    if (lessonData.subject !== undefined) formData.append('subject', lessonData.subject)
+    if (lessonData.level !== undefined) formData.append('level', lessonData.level)
+    if (lessonData.category !== undefined) formData.append('category', lessonData.category)
     if (lessonData.duration !== undefined) formData.append('duration', lessonData.duration)
-    if (lessonData.difficulty !== undefined) formData.append('difficulty', lessonData.difficulty)
     if (lessonData.action !== undefined) formData.append('action', lessonData.action)
     if (lessonData.isPremium !== undefined) formData.append('isPremium', lessonData.isPremium.toString())
     
@@ -111,7 +116,7 @@ export const createLessonWithFiles = async (
     if (lessonData.materials) formData.append('materials', JSON.stringify(lessonData.materials))
     if (lessonData.procedures) formData.append('procedures', JSON.stringify(lessonData.procedures))
     if (lessonData.assessment) formData.append('assessment', JSON.stringify(lessonData.assessment))
-    if (lessonData.lessonActivities) formData.append('lessonActivities', JSON.stringify(lessonData.lessonActivities))
+    if (lessonData.activities) formData.append('activities', JSON.stringify(lessonData.activities))
     
     // Append files
     if (coverImage) formData.append('coverImage', coverImage)
@@ -179,10 +184,9 @@ export const updateLessonWithFiles = async (
     if (lessonData.title !== undefined) formData.append('title', lessonData.title)
     if (lessonData.description !== undefined) formData.append('description', lessonData.description)
     if (lessonData.fullDescription !== undefined) formData.append('fullDescription', lessonData.fullDescription)
-    if (lessonData.grade !== undefined) formData.append('grade', lessonData.grade)
-    if (lessonData.subject !== undefined) formData.append('subject', lessonData.subject)
+    if (lessonData.level !== undefined) formData.append('level', lessonData.level)
+    if (lessonData.category !== undefined) formData.append('category', lessonData.category)
     if (lessonData.duration !== undefined) formData.append('duration', lessonData.duration)
-    if (lessonData.difficulty !== undefined) formData.append('difficulty', lessonData.difficulty)
     if (lessonData.action !== undefined) formData.append('action', lessonData.action)
     if (lessonData.isPremium !== undefined) formData.append('isPremium', lessonData.isPremium.toString())
     
@@ -192,7 +196,7 @@ export const updateLessonWithFiles = async (
     if (lessonData.materials) formData.append('materials', JSON.stringify(lessonData.materials))
     if (lessonData.procedures) formData.append('procedures', JSON.stringify(lessonData.procedures))
     if (lessonData.assessment) formData.append('assessment', JSON.stringify(lessonData.assessment))
-    if (lessonData.lessonActivities) formData.append('lessonActivities', JSON.stringify(lessonData.lessonActivities))
+    if (lessonData.activities) formData.append('activities', JSON.stringify(lessonData.activities))
     
     // Append files
     if (coverImage) formData.append('coverImage', coverImage)

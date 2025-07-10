@@ -5,9 +5,8 @@ export interface LessonQueryParams {
   page?: number
   limit?: number
   search?: string
-  subject?: string
-  difficulty?: string
-  grade?: string
+  category?: string
+  level?: string
   isNew?: boolean
   isPremium?: boolean
   authorId?: number
@@ -38,13 +37,20 @@ export interface Lesson {
   title: string
   description: string
   fullDescription?: string
-  grade: string
-  subject: string
+  level: string
+  category: string
   duration: string
-  difficulty: string
   rating: number
   downloads: number
-  previewImage?: string
+  coverImage?: {
+    originalName: string
+    mimeType: string
+    sizeInBytes: number
+    width: number
+    height: number
+    publicUrl: string
+    uploadedAt: string
+  }
   tags?: string[]
   isNew: boolean
   isPremium: boolean
@@ -52,7 +58,7 @@ export interface Lesson {
   materials?: string[]
   procedures?: LessonProcedure[]
   assessment?: string[]
-  lessonActivities?: LessonActivity[]
+  activities?: LessonActivity[]
   downloadFiles?: LessonDownloadFile[]
   viewCount: number
   favoriteCount: number
@@ -94,21 +100,15 @@ export const getLessons = async (params?: LessonQueryParams): Promise<LessonsRes
     )
   }
   
-  if (params?.subject) {
+  if (params?.category) {
     filteredLessons = filteredLessons.filter(lesson => 
-      lesson.subject.toLowerCase() === params.subject?.toLowerCase()
+      lesson.category.toLowerCase() === params.category?.toLowerCase()
     )
   }
   
-  if (params?.grade) {
+  if (params?.level) {
     filteredLessons = filteredLessons.filter(lesson => 
-      lesson.grade.toLowerCase() === params.grade?.toLowerCase()
-    )
-  }
-  
-  if (params?.difficulty) {
-    filteredLessons = filteredLessons.filter(lesson => 
-      lesson.difficulty.toLowerCase() === params.difficulty?.toLowerCase()
+      lesson.level.toLowerCase() === params.level?.toLowerCase()
     )
   }
   

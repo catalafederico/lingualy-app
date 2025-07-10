@@ -8,13 +8,20 @@ export const mockLessons: Lesson[] = [
       "Teach students to create compelling characters with depth and motivation through interactive exercises and guided practice.",
     fullDescription:
       "This comprehensive lesson plan helps students develop strong character creation skills through a series of engaging activities. Students will learn to create multi-dimensional characters with clear motivations, conflicts, and growth arcs that drive compelling narratives.",
-    grade: "6th Grade",
-    subject: "English Language Arts",
+    level: "Intermediate",
+    category: "Culture",
     duration: "60 minutes",
-    difficulty: "Intermediate",
     rating: 4.8,
     downloads: 1247,
-    previewImage: "/placeholder.svg?height=200&width=300",
+    coverImage: {
+      originalName: "creative-writing-cover.jpg",
+      mimeType: "image/jpeg",
+      sizeInBytes: 1024000,
+      width: 300,
+      height: 200,
+      publicUrl: "/placeholder.svg?height=200&width=300",
+      uploadedAt: "2024-12-01T10:30:00Z"
+    },
     tags: [
       "creative writing",
       "character development",
@@ -74,7 +81,7 @@ export const mockLessons: Lesson[] = [
       "Exit ticket: What makes a character interesting?",
       "Teacher observation during guided practice",
     ],
-    lessonActivities: [
+    activities: [
       {
         skill: "Writing",
         description:
@@ -133,13 +140,20 @@ export const mockLessons: Lesson[] = [
       "Deep dive into the opening act of Romeo and Juliet, exploring themes, character introductions, and dramatic techniques.",
     fullDescription:
       "Students will analyze the first act of Romeo and Juliet, focusing on how Shakespeare establishes conflict, introduces key characters, and sets up the tragic trajectory of the play. This lesson combines close reading, discussion, and creative response activities.",
-    grade: "9th Grade",
-    subject: "Literature",
+    level: "Advanced",
+    category: "Culture",
     duration: "90 minutes",
-    difficulty: "HARD",
     rating: 4.6,
     downloads: 892,
-    previewImage: "/placeholder.svg?height=200&width=300",
+    coverImage: {
+      originalName: "shakespeare-cover.jpg",
+      mimeType: "image/jpeg",
+      sizeInBytes: 1150000,
+      width: 300,
+      height: 200,
+      publicUrl: "/placeholder.svg?height=200&width=300",
+      uploadedAt: "2024-11-15T09:15:00Z"
+    },
     tags: [
       "shakespeare",
       "drama",
@@ -199,7 +213,7 @@ export const mockLessons: Lesson[] = [
       "Written response to key scenes",
       "Vocabulary quiz on Shakespearean terms",
     ],
-    lessonActivities: [
+    activities: [
       {
         skill: "Reading",
         description:
@@ -269,13 +283,20 @@ export const mockLessons: Lesson[] = [
       "Engaging conversation activities to help ESL students practice talking about daily routines and time expressions.",
     fullDescription:
       "This interactive lesson provides ESL students with structured opportunities to practice speaking about daily routines using appropriate time expressions and sequencing language. Perfect for intermediate level learners.",
-    grade: "Adult Education",
-    subject: "ESL",
+    level: "Beginner",
+    category: "Lifestyle",
     duration: "45 minutes",
-    difficulty: "Beginner",
     rating: 4.9,
     downloads: 1567,
-    previewImage: "/placeholder.svg?height=200&width=300",
+    coverImage: {
+      originalName: "esl-conversation-cover.jpg",
+      mimeType: "image/jpeg",
+      sizeInBytes: 980000,
+      width: 300,
+      height: 200,
+      publicUrl: "/placeholder.svg?height=200&width=300",
+      uploadedAt: "2024-10-20T11:00:00Z"
+    },
     tags: [
       "ESL",
       "conversation",
@@ -334,7 +355,7 @@ export const mockLessons: Lesson[] = [
       "Peer feedback on conversation fluency",
       "Self-assessment of confidence speaking",
     ],
-    lessonActivities: [
+    activities: [
       {
         skill: "Speaking",
         description:
@@ -398,13 +419,20 @@ export const mockLessons: Lesson[] = [
       "Hands-on activities to help students understand fractions through visual representations and real-world examples.",
     fullDescription:
       "Students will develop a concrete understanding of fractions through manipulatives, visual models, and practical applications. This lesson builds foundational knowledge for more advanced fraction operations.",
-    grade: "3rd Grade",
-    subject: "Mathematics",
+    level: "Beginner",
+    category: "Science",
     duration: "60 minutes",
-    difficulty: "Beginner",
     rating: 4.7,
     downloads: 2103,
-    previewImage: "/placeholder.svg?height=200&width=300",
+    coverImage: {
+      originalName: "fractions-visual-cover.jpg",
+      mimeType: "image/jpeg",
+      sizeInBytes: 1200000,
+      width: 300,
+      height: 200,
+      publicUrl: "/placeholder.svg?height=200&width=300",
+      uploadedAt: "2024-12-10T08:45:00Z"
+    },
     tags: [
       "fractions",
       "mathematics",
@@ -463,7 +491,7 @@ export const mockLessons: Lesson[] = [
       "Partner sharing about real-world fractions",
       "Exit ticket: Draw a fraction",
     ],
-    lessonActivities: [
+    activities: [
       {
         skill: "Visual Learning",
         description:
@@ -527,13 +555,20 @@ export const mockLessons: Lesson[] = [
       "Students explore the water cycle through experiments, observations, and interactive activities to understand this essential Earth process.",
     fullDescription:
       "This comprehensive science lesson engages students in hands-on exploration of the water cycle. Through demonstrations, experiments, and creative activities, students will understand evaporation, condensation, precipitation, and collection.",
-    grade: "4th Grade",
-    subject: "Science",
+    level: "Intermediate",
+    category: "Environment",
     duration: "90 minutes",
-    difficulty: "Intermediate",
     rating: 4.8,
     downloads: 1834,
-    previewImage: "/placeholder.svg?height=200&width=300",
+    coverImage: {
+      originalName: "water-cycle-cover.jpg",
+      mimeType: "image/jpeg",
+      sizeInBytes: 1350000,
+      width: 300,
+      height: 200,
+      publicUrl: "/placeholder.svg?height=200&width=300",
+      uploadedAt: "2024-09-18T14:20:00Z"
+    },
     tags: [
       "water cycle",
       "science",
@@ -595,7 +630,7 @@ export const mockLessons: Lesson[] = [
       "Vocabulary matching quiz",
       "Science journal reflection writing",
     ],
-    lessonActivities: [
+    activities: [
       {
         skill: "Scientific Observation",
         description:

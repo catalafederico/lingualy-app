@@ -40,6 +40,7 @@ import {
 import Link from "next/link"
 import { createLesson, createLessonWithFiles, updateLessonWithFiles, getLessonById, CreateLessonData } from "@/services/lessons/create-lesson"
 import type { LessonProcedure } from "@/services/lessons/get-lessons"
+import { CEFR_LEVELS, LESSON_CATEGORIES } from "@/lib/constants"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
 import { toast } from "@/lib/toast"
 
@@ -48,10 +49,9 @@ const draftSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
   fullDescription: z.string().optional(),
-  grade: z.string().optional(),
-  subject: z.string().optional(),
+  level: z.string().optional(),
+  category: z.string().optional(),
   duration: z.string().optional(),
-  difficulty: z.enum(["Beginner", "Intermediate", "HARD"]).optional(),
   tags: z.array(z.string()).optional(),
   objectives: z.array(z.string()).optional(),
   materials: z.array(z.string()).optional(),
@@ -61,7 +61,7 @@ const draftSchema = z.object({
     description: z.string()
   })).optional(),
   assessment: z.array(z.string()).optional(),
-  lessonActivities: z.array(z.object({
+  activities: z.array(z.object({
     skill: z.string(),
     description: z.string()
   })).optional(),
@@ -80,10 +80,9 @@ const publishSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   fullDescription: z.string().optional(),
-  grade: z.string().min(1, "Grade is required"),
-  subject: z.string().min(1, "Subject is required"),
+  level: z.string().min(1, "Level is required"),
+  category: z.string().min(1, "Category is required"),
   duration: z.string().min(1, "Duration is required"),
-  difficulty: z.enum(["Beginner", "Intermediate", "HARD"]).optional(),
   tags: z.array(z.string()).optional(),
   objectives: z.array(z.string()).optional(),
   materials: z.array(z.string()).optional(),
@@ -93,7 +92,7 @@ const publishSchema = z.object({
     description: z.string()
   })).optional(),
   assessment: z.array(z.string()).optional(),
-  lessonActivities: z.array(z.object({
+  activities: z.array(z.object({
     skill: z.string(),
     description: z.string()
   })).optional(),
@@ -112,38 +111,9 @@ const lessonSchema = draftSchema
 
 type LessonFormData = z.infer<typeof lessonSchema>
 
-const subjects = [
-  "English Language Arts",
-  "Mathematics",
-  "Science",
-  "Social Studies",
-  "Art",
-  "Music",
-  "Physical Education",
-  "Foreign Language",
-  "Computer Science",
-  "ESL",
-  "Special Education",
-  "Other"
-]
-
-const grades = [
-  "Pre-K",
-  "Kindergarten",
-  "1st Grade",
-  "2nd Grade", 
-  "3rd Grade",
-  "4th Grade",
-  "5th Grade",
-  "6th Grade",
-  "7th Grade",
-  "8th Grade",
-  "9th Grade",
-  "10th Grade",
-  "11th Grade",
-  "12th Grade",
-  "Adult Education"
-]
+// Extract values from constants for use in selects
+const levels = CEFR_LEVELS.map(level => level.value)
+const categories = LESSON_CATEGORIES.map(category => category.value)
 
 const durations = [
   "15 minutes",
@@ -254,23 +224,23 @@ export default function CreateLessonPage() {
       setValue('title', lesson.title)
       setValue('description', lesson.description)
       setValue('fullDescription', lesson.fullDescription || '')
-      setValue('grade', lesson.grade)
-      setValue('subject', lesson.subject)
+      setValue('level', lesson.level)
+      setValue('category', lesson.category)
       setValue('duration', lesson.duration)
-      setValue('difficulty', lesson.difficulty as "Beginner" | "Intermediate" | "HARD")
       setValue('tags', lesson.tags || [])
       setValue('objectives', lesson.objectives || [])
       setValue('materials', lesson.materials || [])
       setValue('procedures', lesson.procedures || [])
       setValue('assessment', lesson.assessment || [])
-      setValue('lessonActivities', lesson.lessonActivities || [])
+      setValue('activities', lesson.activities || [])
       setValue('isPremium', lesson.isPremium)
       
       // Handle existing files
       setExistingFiles(lesson.downloadFiles || [])
       
-      if (lesson.previewImage) {
-        setPreviewImageUrl(lesson.previewImage)
+      // Load cover image from public URL if available
+      if (lesson.coverImage?.publicUrl) {
+        setPreviewImageUrl(lesson.coverImage.publicUrl)
       }
       
     } catch (error) {
@@ -297,7 +267,7 @@ export default function CreateLessonPage() {
       materials: [],
       procedures: [],
       assessment: [],
-      lessonActivities: [],
+      activities: [],
       downloadFiles: [],
       isPremium: false,
     },
@@ -308,7 +278,7 @@ export default function CreateLessonPage() {
   const watchedMaterials = Array.isArray(watch("materials")) ? watch("materials")! : []
   const watchedProcedures = Array.isArray(watch("procedures")) ? watch("procedures")! : []
   const watchedAssessment = Array.isArray(watch("assessment")) ? watch("assessment")! : []
-  const watchedLessonActivities = Array.isArray(watch("lessonActivities")) ? watch("lessonActivities")! : []
+  const watchedActivities = Array.isArray(watch("activities")) ? watch("activities")! : []
   const watchedDownloadFiles = Array.isArray(watch("downloadFiles")) ? watch("downloadFiles")! : []
 
   const addTag = () => {
@@ -374,7 +344,7 @@ export default function CreateLessonPage() {
 
   const addLessonActivity = () => {
     if (newActivitySkill.trim() && newActivityDescription.trim()) {
-      setValue("lessonActivities", [...watchedLessonActivities, {
+      setValue("activities", [...watchedActivities, {
         skill: newActivitySkill.trim(),
         description: newActivityDescription.trim()
       }])
@@ -384,7 +354,7 @@ export default function CreateLessonPage() {
   }
 
   const removeLessonActivity = (index: number) => {
-    setValue("lessonActivities", watchedLessonActivities.filter((_, i) => i !== index))
+    setValue("activities", watchedActivities.filter((_, i) => i !== index))
   }
 
   const handlePreviewImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -428,13 +398,17 @@ export default function CreateLessonPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
+  const getLevelColor = (level: string) => {
+    switch (level) {
       case "Beginner":
         return "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+      case "Pre-intermediate":
+        return "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
       case "Intermediate":
         return "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300"
-      case "HARD":
+      case "Upper-intermediate":
+        return "bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300"
+      case "Advanced":
         return "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
       default:
         return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
@@ -486,17 +460,16 @@ export default function CreateLessonPage() {
         title: data.title || '',
         description: data.description || '',
         fullDescription: data.fullDescription || '',
-        grade: data.grade || '',
-        subject: data.subject || '',
+        level: data.level || '',
+        category: data.category || '',
         duration: data.duration || '',
-        difficulty: data.difficulty,
         tags: Array.isArray(data.tags) ? data.tags.filter(tag => tag && tag.trim()) : [],
         objectives: Array.isArray(data.objectives) ? data.objectives.filter(obj => obj && obj.trim()) : [],
         materials: Array.isArray(data.materials) ? data.materials.filter(mat => mat && mat.trim()) : [],
         procedures: Array.isArray(data.procedures) ? data.procedures.filter(proc => 
           proc && proc.title && proc.title.trim() && proc.duration && proc.duration.trim() && proc.description && proc.description.trim()) : [],
         assessment: Array.isArray(data.assessment) ? data.assessment.filter(ass => ass && ass.trim()) : [],
-        lessonActivities: Array.isArray(data.lessonActivities) ? data.lessonActivities.filter(activity => 
+        activities: Array.isArray(data.activities) ? data.activities.filter(activity => 
           activity && activity.skill && activity.skill.trim() && activity.description && activity.description.trim()) : [],
         isPremium: data.isPremium || false,
         action: type === 'publish' ? 'publish' as const : 'save' as const,
@@ -567,7 +540,7 @@ export default function CreateLessonPage() {
       materials: Array.isArray(formData.materials) ? formData.materials : [],
       procedures: Array.isArray(formData.procedures) ? formData.procedures : [],
       assessment: Array.isArray(formData.assessment) ? formData.assessment : [],
-      lessonActivities: Array.isArray(formData.lessonActivities) ? formData.lessonActivities : [],
+      activities: Array.isArray(formData.activities) ? formData.activities : [],
       downloadFiles: Array.isArray(formData.downloadFiles) ? formData.downloadFiles : [],
     }
     
@@ -598,7 +571,7 @@ export default function CreateLessonPage() {
 
   // Button disabled state
   const buttonsDisabled = isSubmitting || isLoadingLesson
-  const canSave = watch("title") && watch("description") && watch("grade") && watch("subject") && watch("duration")
+  const canSave = watch("title") && watch("description") && watch("level") && watch("category") && watch("duration")
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -798,43 +771,43 @@ export default function CreateLessonPage() {
                 />
               </div>
 
-              {/* Grade, Subject, Duration, Difficulty Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Level, Category, Duration Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="grade">Grade Level *</Label>
-                  <Select onValueChange={(value) => setValue("grade", value)} value={watch("grade") || ""}>
-                    <SelectTrigger className={`w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${errors.grade ? "border-red-500" : ""}`}>
-                      <SelectValue placeholder="Select grade level" />
+                  <Label htmlFor="level">CEFR Level *</Label>
+                  <Select onValueChange={(value) => setValue("level", value)} value={watch("level") || ""}>
+                    <SelectTrigger className={`w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${errors.level ? "border-red-500" : ""}`}>
+                      <SelectValue placeholder="Select CEFR level" />
                     </SelectTrigger>
                     <SelectContent>
-                      {grades.map((grade) => (
-                        <SelectItem key={grade} value={grade}>
-                          {grade}
+                      {CEFR_LEVELS.map((level) => (
+                        <SelectItem key={level.value} value={level.value}>
+                          {level.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.grade && (
-                    <p className="text-sm text-red-500">{errors.grade.message}</p>
+                  {errors.level && (
+                    <p className="text-sm text-red-500">{errors.level.message}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="subject">Subject *</Label>
-                  <Select onValueChange={(value) => setValue("subject", value)} value={watch("subject") || ""}>
-                    <SelectTrigger className={`w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${errors.subject ? "border-red-500" : ""}`}>
-                      <SelectValue placeholder="Select subject" />
+                  <Label htmlFor="category">Category *</Label>
+                  <Select onValueChange={(value) => setValue("category", value)} value={watch("category") || ""}>
+                    <SelectTrigger className={`w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${errors.category ? "border-red-500" : ""}`}>
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {subjects.map((subject) => (
-                        <SelectItem key={subject} value={subject}>
-                          {subject}
+                      {LESSON_CATEGORIES.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.subject && (
-                    <p className="text-sm text-red-500">{errors.subject.message}</p>
+                  {errors.category && (
+                    <p className="text-sm text-red-500">{errors.category.message}</p>
                   )}
                 </div>
 
@@ -855,20 +828,6 @@ export default function CreateLessonPage() {
                   {errors.duration && (
                     <p className="text-sm text-red-500">{errors.duration.message}</p>
                   )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="difficulty">Difficulty Level</Label>
-                  <Select onValueChange={(value) => setValue("difficulty", value as "Beginner" | "Intermediate" | "HARD")} value={watch("difficulty") || ""}>
-                    <SelectTrigger className="w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                      <SelectValue placeholder="Select difficulty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Beginner">Beginner</SelectItem>
-                      <SelectItem value="Intermediate">Intermediate</SelectItem>
-                      <SelectItem value="HARD">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
@@ -1128,7 +1087,7 @@ export default function CreateLessonPage() {
                 Add Skill Activity
               </Button>
               <div className="space-y-2">
-                {watchedLessonActivities.map((activity, index) => (
+                {watchedActivities.map((activity, index) => (
                   <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -1268,12 +1227,9 @@ export default function CreateLessonPage() {
                 
                 {/* Badges */}
                 <div className="absolute top-4 right-4">
-                  {watch("difficulty") && (
-                    <Badge className={getDifficultyColor(watch("difficulty") || "")}>
-                      {watch("difficulty") === "Beginner" ? "Beginner" : 
-                       watch("difficulty") === "Intermediate" ? "Intermediate" : 
-                       watch("difficulty") === "HARD" ? "Advanced" : 
-                       watch("difficulty")}
+                  {watch("level") && (
+                    <Badge className={getLevelColor(watch("level") || "")}>
+                      {watch("level")}
                     </Badge>
                   )}
                 </div>
@@ -1288,8 +1244,8 @@ export default function CreateLessonPage() {
               {/* Title and Description */}
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  {watch("grade") && <Badge variant="outline">{watch("grade")}</Badge>}
-                  {watch("subject") && <Badge variant="outline">{watch("subject")}</Badge>}
+                  {watch("level") && <Badge variant="outline">{watch("level")}</Badge>}
+                  {watch("category") && <Badge variant="outline">{watch("category")}</Badge>}
                   {watchedTags.map((tag, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {tag}
@@ -1321,10 +1277,10 @@ export default function CreateLessonPage() {
                     <Download className="h-4 w-4" />
                     <span>0 downloads</span>
                   </div>
-                  {watch("grade") && (
+                  {watch("level") && (
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      <span>Grade {watch("grade")}</span>
+                      <span>{watch("level")} Level</span>
                     </div>
                   )}
                 </div>
@@ -1358,17 +1314,17 @@ export default function CreateLessonPage() {
                     </div>
                   )}
 
-                  {watchedObjectives.length > 0 && watchedLessonActivities.length > 0 && <Separator />}
+                  {watchedObjectives.length > 0 && watchedActivities.length > 0 && <Separator />}
 
                   {/* Lesson Activities */}
-                  {watchedLessonActivities.length > 0 && (
+                  {watchedActivities.length > 0 && (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
                         <Award className="h-5 w-5 text-amber-600" />
                         Skills & Activities
                       </h3>
                       <div className="space-y-3">
-                        {watchedLessonActivities.map((activity, index) => (
+                        {watchedActivities.map((activity, index) => (
                           <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                             <div className="flex items-center gap-2 mb-2">
                               <div className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
