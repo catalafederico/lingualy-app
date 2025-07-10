@@ -153,19 +153,27 @@ export const getFeaturedLessons = async (limit = 6): Promise<Lesson[]> => {
 }
 
 export const getLessonById = async (id: number): Promise<Lesson> => {
-  // Temporary mock data - replace with real API call when backend is ready
-  // const response = await axios.get(`/lessons/${id}`)
-  // return response.data
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300))
-  
-  const lesson = mockLessons.find(lesson => lesson.id === id)
-  if (!lesson) {
-    throw new Error(`Lesson with id ${id} not found`)
+  try {
+    const response = await axios.get(`/lessons/${id}`)
+    return response.data
+  } catch (error: any) {
+    // If API fails, fall back to mock data for development
+    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+      console.warn('API unavailable, using mock data for lesson', id)
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      const lesson = mockLessons.find(lesson => lesson.id === id)
+      if (!lesson) {
+        throw new Error(`Lesson with id ${id} not found`)
+      }
+      
+      return lesson
+    }
+    
+    // Re-throw other errors
+    throw error
   }
-  
-  return lesson
 }
 
 export const getMyLessons = async (): Promise<Lesson[]> => {

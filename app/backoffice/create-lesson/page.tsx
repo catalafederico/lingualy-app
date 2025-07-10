@@ -579,11 +579,17 @@ export default function CreateLessonPage() {
       // Show success toast
       showSuccessToast(type, isUpdate)
 
-      // Reset file tracking state
-      setDownloadFiles([])
-      setRemovedFileIds([])
-      setCoverImageChanged(false)
-      setPreviewImageFile(null)
+      // Update existing files with the server response to show newly uploaded files
+      if (result.downloadFiles) {
+        const updatedExistingFiles = result.downloadFiles.map(mapDownloadFileForDisplay)
+        setExistingFiles(updatedExistingFiles)
+      }
+
+      // Reset file tracking state  
+      setDownloadFiles([]) // Clear new files that were just uploaded
+      setRemovedFileIds([]) // Clear removed file tracking
+      setCoverImageChanged(false) // Reset cover image change flag
+      setPreviewImageFile(null) // Clear cover image file
 
       // Navigate back to backoffice with success message
       let message: string
