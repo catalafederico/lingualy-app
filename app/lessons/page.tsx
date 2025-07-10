@@ -547,22 +547,22 @@ export default function LessonsPage() {
                 >
                   <div className="relative overflow-hidden rounded-t-lg">
                     <img
-                      src={lesson.previewImage || "/placeholder.svg"}
+                      src={lesson.coverImage?.publicUrl || "/placeholder.svg"}
                       alt={lesson.title}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-4 right-4">
-                      <Badge className={getDifficultyColor(lesson.difficulty)}>{lesson.difficulty}</Badge>
+                      <Badge className={getDifficultyColor(lesson.level)}>{lesson.level}</Badge>
                     </div>
                   </div>
 
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline" className="text-xs">
-                        {lesson.grade}
+                        {lesson.level}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {lesson.subject}
+                        {lesson.category}
                       </Badge>
                     </div>
                     <CardTitle className="text-lg leading-tight text-gray-900 dark:text-gray-100">

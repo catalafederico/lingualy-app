@@ -316,6 +316,37 @@ export const rateLesson = async (id: number, rating: number): Promise<void> => {
   await axios.post(`/lessons/${id}/rate`, { rating });
 };
 
+export const downloadFile = async (lessonId: number, fileId: string): Promise<string> => {
+  try {
+    const response = await axios.get(`/lessons/${lessonId}/files/${fileId}`);
+    return response.data.signedUrl;
+  } catch (error: any) {
+    // Handle specific error types
+    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+      throw new Error('Network connection failed. Please check your internet connection and try again.');
+    }
+    
+    if (error.response?.status === 404) {
+      throw new Error('File not found. It may have been deleted or moved.');
+    }
+    
+    if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
+    if (error.response?.status === 403) {
+      throw new Error('Permission denied. You do not have access to download this file.');
+    }
+    
+    if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    }
+    
+    // Generic error fallback
+    throw new Error(error.response?.data?.message || 'Failed to download file. Please try again.');
+  }
+};
+
 export const getDraftLessons = async (): Promise<Lesson[]> => {
   try {
     const response = await axios.get('/lessons/drafts');

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getLessonById, downloadLesson, type Lesson } from "@/services/lessons"
+import { getLessonById, downloadLesson, downloadFile, type Lesson } from "@/services/lessons"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -43,6 +43,7 @@ export default function LessonDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showFullDescription, setShowFullDescription] = useState(false)
+  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null)
 
   useEffect(() => {
     // Check authentication
@@ -81,16 +82,62 @@ export default function LessonDetailPage() {
     }
   }
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Beginner":
+  const handleFileDownload = async (file: any) => {
+    try {
+      setDownloadingFileId(file.id)
+      let downloadUrl: string
+      
+      // If file has publicUrl, use it directly
+      if (file.publicUrl) {
+        downloadUrl = file.publicUrl
+      } else if (file.id) {
+        // Otherwise, get signed URL from API if file ID exists
+        downloadUrl = await downloadFile(lesson!.id, file.id)
+      } else {
+        throw new Error('File cannot be downloaded - no URL or ID available')
+      }
+      
+      // Download the file using fetch and blob for better cross-origin support
+      const response = await fetch(downloadUrl)
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`)
+      }
+      
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      
+      // Create a temporary link and trigger download
+      const fileName = file.displayName || file.originalName || 'download'
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = fileName
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (error) {
+      console.error('Error downloading file:', error)
+      // Show error message to user
+      alert('Failed to download file. Please try again later.')
+    } finally {
+      setDownloadingFileId(null)
+    }
+  }
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
       case "Beginner":
         return "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
-      case "Intermediate":
+      case "Pre-intermediate":
+        return "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
       case "Intermediate":
         return "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300"
+      case "Upper-intermediate":
+        return "bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300"
       case "Advanced":
-      case "HARD":
         return "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
       default:
         return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
@@ -151,16 +198,13 @@ export default function LessonDetailPage() {
               <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
                 <div className="relative overflow-hidden rounded-t-lg">
                   <img
-                    src={lesson.previewImage || "/placeholder.svg"}
+                    src={lesson.coverImage?.publicUrl || "/placeholder.svg"}
                     alt={lesson.title}
                     className="w-full h-64 object-cover"
                   />
                   <div className="absolute top-4 right-4">
-                    <Badge className={getDifficultyColor(lesson.difficulty)}>
-                      {lesson.difficulty === "Beginner" ? "Beginner" : 
-                       lesson.difficulty === "Intermediate" ? "Intermediate" : 
-                       lesson.difficulty === "HARD" ? "Advanced" : 
-                       lesson.difficulty}
+                    <Badge className={getLevelColor(lesson.level)}>
+                      {lesson.level}
                     </Badge>
                   </div>
                   <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -175,9 +219,9 @@ export default function LessonDetailPage() {
 
                 <CardHeader>
                   <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <Badge variant="outline">{lesson.grade}</Badge>
-                    <Badge variant="outline">{lesson.subject}</Badge>
-                    {lesson.tags.map((tag, index) => (
+                    <Badge variant="outline">{lesson.level}</Badge>
+                    <Badge variant="outline">{lesson.category}</Badge>
+                    {lesson.tags?.map((tag, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
                         {tag}
                       </Badge>
@@ -223,7 +267,7 @@ export default function LessonDetailPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      <span>Grade {lesson.grade}</span>
+                      <span>Level {lesson.level}</span>
                     </div>
                   </div>
                 </CardHeader>
@@ -266,7 +310,7 @@ export default function LessonDetailPage() {
                           Skills & Activities
                         </h3>
                         <div className="space-y-3">
-                          {lesson.lessonActivities?.map((activity, index) => (
+                          {lesson.activities?.map((activity, index) => (
                             <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                               <div className="flex items-center gap-2 mb-2">
                                 <div className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
@@ -398,12 +442,21 @@ export default function LessonDetailPage() {
                         <div className="flex items-center gap-3">
                           <FileText className="h-4 w-4 text-gray-500" />
                           <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{file.type.toUpperCase()} • {file.size}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{file.displayName}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{file.extension.toUpperCase()} • {file.sizeInBytes > 1024 * 1024 ? (file.sizeInBytes / (1024 * 1024)).toFixed(1) + 'MB' : (file.sizeInBytes / 1024).toFixed(1) + 'KB'}</p>
                           </div>
                         </div>
-                        <Button size="sm" variant="ghost">
-                          <Download className="h-3 w-3" />
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleFileDownload(file)}
+                          disabled={downloadingFileId === file.id}
+                        >
+                          {downloadingFileId === file.id ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
+                          ) : (
+                            <Download className="h-3 w-3" />
+                          )}
                         </Button>
                       </div>
                       ))}
