@@ -342,3 +342,79 @@ export const getDraftLessons = async (): Promise<Lesson[]> => {
     throw new Error(error.response?.data?.message || 'Failed to load draft lessons. Please try again.');
   }
 };
+
+export const publishLesson = async (
+  id: number,
+  lessonData: Omit<CreateLessonData, 'previewImage' | 'downloadFiles'>,
+  coverImage?: File,
+  downloadFiles?: File[],
+  removedFileIds?: string[]
+): Promise<Lesson> => {
+  try {
+    // Use multipart/form-data for file uploads
+    const formData = new FormData()
+    
+    // Append individual lesson data fields
+    if (lessonData.title !== undefined) formData.append('title', lessonData.title)
+    if (lessonData.description !== undefined) formData.append('description', lessonData.description)
+    if (lessonData.fullDescription !== undefined) formData.append('fullDescription', lessonData.fullDescription)
+    if (lessonData.level !== undefined) formData.append('level', lessonData.level)
+    if (lessonData.category !== undefined) formData.append('category', lessonData.category)
+    if (lessonData.duration !== undefined) formData.append('duration', lessonData.duration)
+    if (lessonData.isPremium !== undefined) formData.append('isPremium', lessonData.isPremium.toString())
+    
+    // Append arrays as JSON strings
+    if (lessonData.tags) formData.append('tags', JSON.stringify(lessonData.tags))
+    if (lessonData.objectives) formData.append('objectives', JSON.stringify(lessonData.objectives))
+    if (lessonData.materials) formData.append('materials', JSON.stringify(lessonData.materials))
+    if (lessonData.procedures) formData.append('procedures', JSON.stringify(lessonData.procedures))
+    if (lessonData.assessment) formData.append('assessment', JSON.stringify(lessonData.assessment))
+    if (lessonData.activities) formData.append('activities', JSON.stringify(lessonData.activities))
+    
+    // Append files
+    if (coverImage) formData.append('coverImage', coverImage)
+    downloadFiles?.forEach(file => formData.append('downloadFiles', file))
+    if (removedFileIds?.length) formData.append('removedFiles', JSON.stringify(removedFileIds))
+    
+    const response = await axios.post(`/lessons/${id}/publish`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  } catch (error: any) {
+    // Handle specific error types
+    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+      throw new Error('Network connection failed. Please check your internet connection and try again.')
+    }
+    
+    if (error.response?.status === 404) {
+      throw new Error('Lesson not found. It may have been deleted or moved.')
+    }
+    
+    if (error.response?.status === 413) {
+      throw new Error('File size too large. Please reduce file sizes and try again.')
+    }
+    
+    if (error.response?.status === 400) {
+      throw new Error('Invalid lesson data. Please check all required fields and try again.')
+    }
+    
+    if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.')
+    }
+    
+    if (error.response?.status === 403) {
+      throw new Error('Permission denied. You do not have access to publish this lesson.')
+    }
+    
+    if (error.response?.status === 422) {
+      throw new Error('Validation failed. Please check your input data and try again.')
+    }
+    
+    if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.')
+    }
+    
+    // Generic error fallback
+    throw new Error(error.response?.data?.message || 'Failed to publish lesson. Please try again.')
+  }
+};

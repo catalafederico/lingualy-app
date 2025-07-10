@@ -38,7 +38,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
-import { createLesson, createLessonWithFiles, updateLessonWithFiles, getLessonById, CreateLessonData } from "@/services/lessons/create-lesson"
+import { createLesson, createLessonWithFiles, updateLessonWithFiles, getLessonById, publishLesson, CreateLessonData } from "@/services/lessons/create-lesson"
 import type { LessonProcedure } from "@/services/lessons/get-lessons"
 import { CEFR_LEVELS, LESSON_CATEGORIES } from "@/lib/constants"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
@@ -614,8 +614,93 @@ export default function CreateLessonPage() {
     await onSubmit(safeFormData, 'draft')
   }
   
-  // For publish, use form validation
-  const handlePublish = handleSubmit((data) => onSubmit(data, 'publish'))
+  // For publish, use form validation and correct endpoint
+  const handlePublish = handleSubmit(async (data) => {
+    try {
+      setIsSubmitting(true)
+      setSubmitType('publish')
+
+      // Validate against publish schema
+      try {
+        publishSchema.parse(data)
+      } catch (validationError) {
+        if (validationError instanceof z.ZodError) {
+          // Show first validation error
+          const firstError = validationError.errors[0]
+          toast.error("Validation Error", `${firstError.path.join('.')}: ${firstError.message}`)
+          return
+        }
+      }
+
+      // Prepare lesson data (exclude file fields)
+      const lessonData = {
+        title: data.title || '',
+        description: data.description || '',
+        fullDescription: data.fullDescription || '',
+        level: data.level || '',
+        category: data.category || '',
+        duration: data.duration || '',
+        tags: Array.isArray(data.tags) ? data.tags.filter(tag => tag && tag.trim()) : [],
+        objectives: Array.isArray(data.objectives) ? data.objectives.filter(obj => obj && obj.trim()) : [],
+        materials: Array.isArray(data.materials) ? data.materials.filter(mat => mat && mat.trim()) : [],
+        procedures: Array.isArray(data.procedures) ? data.procedures.filter(proc => 
+          proc && proc.title && proc.title.trim() && proc.duration && proc.duration.trim() && proc.description && proc.description.trim()) : [],
+        assessment: Array.isArray(data.assessment) ? data.assessment.filter(ass => ass && ass.trim()) : [],
+        activities: Array.isArray(data.activities) ? data.activities.filter(activity => 
+          activity && activity.skill && activity.skill.trim() && activity.description && activity.description.trim()) : [],
+        isPremium: data.isPremium || false,
+      }
+
+      let result
+      const isUpdate = !!currentLessonId
+
+      if (isUpdate) {
+        // Update existing lesson and publish
+        result = await publishLesson(
+          currentLessonId!,
+          lessonData,
+          coverImageChanged ? (previewImageFile || undefined) : undefined,
+          downloadFiles,
+          removedFileIds
+        )
+      } else {
+        // Create new lesson and publish
+        result = await createLessonWithFiles(
+          { ...lessonData, action: 'publish' as const },
+          previewImageFile || undefined,
+          downloadFiles
+        )
+        
+        // Update URL and state with new lesson ID
+        setCurrentLessonId(result.id)
+        window.history.replaceState(null, '', `/backoffice/create-lesson?edit=${result.id}`)
+      }
+
+      // Show success toast
+      showSuccessToast('publish', isUpdate)
+
+      // Update existing files with the server response to show newly uploaded files
+      if (result.downloadFiles) {
+        const updatedExistingFiles = result.downloadFiles.map(mapDownloadFileForDisplay)
+        setExistingFiles(updatedExistingFiles)
+      }
+
+      // Reset file tracking state  
+      setDownloadFiles([]) // Clear new files that were just uploaded
+      setRemovedFileIds([]) // Clear removed file tracking
+      setCoverImageChanged(false) // Reset cover image change flag
+      setPreviewImageFile(null) // Clear cover image file
+
+      // Navigate back to backoffice with success message
+      router.push('/backoffice?published=true')
+
+    } catch (error) {
+      console.error("Error publishing lesson:", error)
+      showErrorToast(error, 'publish')
+    } finally {
+      setIsSubmitting(false)
+    }
+  })
 
   // Loading state - only show loading when actually loading lesson data
   if (isLoadingLesson) {
