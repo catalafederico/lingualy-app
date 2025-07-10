@@ -221,11 +221,6 @@ export default function LessonDetailPage() {
                   <div className="flex flex-wrap items-center gap-2 mb-4">
                     <Badge variant="outline">{lesson.level}</Badge>
                     <Badge variant="outline">{lesson.category}</Badge>
-                    {lesson.tags?.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
                   </div>
                   
                   <CardTitle className="text-2xl lg:text-3xl text-gray-900 dark:text-gray-100">
@@ -250,6 +245,17 @@ export default function LessonDetailPage() {
                       lesson.fullDescription
                     )}
                   </CardDescription>
+
+                  {/* Tags */}
+                  {lesson.tags && lesson.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {lesson.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Stats Row */}
                   <div className="flex items-center gap-6 pt-4 text-sm text-gray-600 dark:text-gray-400">
