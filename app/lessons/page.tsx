@@ -123,7 +123,7 @@ export default function LessonsPage() {
     setSearchTerm("")
     setSelectedGrade("")
     setSelectedSubject("")
-    loadFeaturedLessons()
+    loadLessons()
   }
 
   // Handler functions

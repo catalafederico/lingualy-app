@@ -58,33 +58,12 @@ export default function HomePage() {
   const fetchLessons = async () => {
     setIsLoadingLessons(true)
     try {
-      // Build search term that includes filters for enhanced search
-      let enhancedSearch = searchTerm || ''
-      
-      // Add selected categories and levels to search if available
-      if (selectedCategories.length > 0 || selectedLevels.length > 0) {
-        const searchTerms = [enhancedSearch]
-        
-        // Add categories to search
-        selectedCategories.forEach(category => {
-          if (category) searchTerms.push(category)
-        })
-        
-        // Add levels to search  
-        selectedLevels.forEach(level => {
-          if (level) searchTerms.push(level)
-        })
-        
-        enhancedSearch = searchTerms.filter(term => term.trim()).join(' ')
-      }
-      
       const params: LessonQueryParams = {
         page: currentPage,
         limit: lessonsPerPage,
-        search: enhancedSearch || undefined,
-        // Still pass individual filters for backend to use if it supports them
-        category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
-        level: selectedLevels.length > 0 ? selectedLevels[0] : undefined,
+        search: searchTerm || undefined,
+        categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+        levels: selectedLevels.length > 0 ? selectedLevels : undefined,
       }
       
       const response = await getLessons(params)

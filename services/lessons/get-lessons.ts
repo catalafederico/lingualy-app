@@ -5,11 +5,8 @@ export interface LessonQueryParams {
   page?: number
   limit?: number
   search?: string
-  category?: string
-  level?: string
-  isNew?: boolean
-  isPremium?: boolean
-  authorId?: number
+  categories?: string[]
+  levels?: string[]
   sortBy?: string
   sortOrder?: 'ASC' | 'DESC'
 }
