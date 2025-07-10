@@ -421,56 +421,41 @@ export default function CreateLessonPage() {
       setDownloadingFileId(file.id)
 
       if (file.url && file.url !== '' && file.url !== '#') {
-        // Direct download via public URL
-        const link = document.createElement('a')
-        link.href = file.url
-        link.download = file.name
-        link.target = '_blank'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        toast.success('Download started', `Downloading ${file.name}`)
+        // Open file in new tab via public URL
+        window.open(file.url, '_blank')
       } else if (currentLessonId) {
         // Secure download via API endpoint
         const response = await axios.get(`/lessons/${currentLessonId}/files/${file.id}`)
         const { downloadUrl } = response.data
 
-        const link = document.createElement('a')
-        link.href = downloadUrl
-        link.download = file.name
-        link.target = '_blank'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        toast.success('Download started', `Downloading ${file.name}`)
+        // Open file in new tab
+        window.open(downloadUrl, '_blank')
       } else {
-        toast.error('Download failed', 'Unable to download file at this time')
+        toast.error('Failed to open file', 'Unable to open file at this time')
       }
     } catch (error: any) {
-      console.error('Download error:', error)
-      const errorMessage = error.response?.data?.message || 'Failed to download file'
-      toast.error('Download failed', errorMessage)
+      console.error('File open error:', error)
+      const errorMessage = error.response?.data?.message || 'Failed to open file'
+      toast.error('Failed to open file', errorMessage)
     } finally {
       setDownloadingFileId(null)
     }
   }
 
-  // Download new (local) file function
+  // Open new (local) file function
   const handleNewFileDownload = (file: File) => {
     try {
       const url = URL.createObjectURL(file)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = file.name
-      link.target = '_blank'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url) // Clean up memory
-      toast.success('Download started', `Downloading ${file.name}`)
+      // Open in new tab instead of forcing download
+      window.open(url, '_blank')
+      
+      // Clean up URL after a delay to allow the browser to load it
+      setTimeout(() => {
+        URL.revokeObjectURL(url)
+      }, 1000)
     } catch (error: any) {
-      console.error('Download error:', error)
-      toast.error('Download failed', 'Failed to download the file')
+      console.error('File open error:', error)
+      toast.error('Failed to open file', 'Unable to open the file')
     }
   }
 
@@ -1243,7 +1228,7 @@ export default function CreateLessonPage() {
                         <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{file.name}</p>
                         <p className="text-xs text-blue-700 dark:text-blue-300">{file.type} • {file.size}</p>
                         <p className="text-xs text-blue-600 dark:text-blue-400">
-                          {downloadingFileId === file.id ? 'Downloading...' : 'Existing file - Click to download'}
+                          {downloadingFileId === file.id ? 'Opening...' : 'Existing file - Click to open'}
                         </p>
                       </div>
                       <button
@@ -1277,7 +1262,7 @@ export default function CreateLessonPage() {
                       <div className="flex-1">
                         <p className="text-sm font-medium text-green-900 dark:text-green-100">{file.name}</p>
                         <p className="text-xs text-green-700 dark:text-green-300">{file.type} • {formatFileSize(file.size)}</p>
-                        <p className="text-xs text-green-600 dark:text-green-400">New file - Click to download</p>
+                        <p className="text-xs text-green-600 dark:text-green-400">New file - Click to open</p>
                       </div>
                       <button
                         type="button"
