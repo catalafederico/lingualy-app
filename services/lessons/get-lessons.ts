@@ -21,10 +21,15 @@ export interface LessonProcedure {
 }
 
 export interface LessonDownloadFile {
-  name: string
-  type: string
-  size: string
-  url?: string
+  id: string
+  originalName: string
+  displayName: string
+  mimeType: string
+  sizeInBytes: number
+  extension: string
+  publicUrl: string
+  uploadedAt: string
+  downloadCount: number
 }
 
 export interface LessonActivity {

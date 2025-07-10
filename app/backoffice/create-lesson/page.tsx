@@ -155,6 +155,7 @@ export default function CreateLessonPage() {
   const [existingFiles, setExistingFiles] = useState<any[]>([])
   const [removedFileIds, setRemovedFileIds] = useState<string[]>([])
   const [coverImageChanged, setCoverImageChanged] = useState(false)
+  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null)
 
   // Client-side hydration and URL parameter handling
   useEffect(() => {
@@ -235,8 +236,9 @@ export default function CreateLessonPage() {
       setValue('activities', lesson.activities || [])
       setValue('isPremium', lesson.isPremium)
       
-      // Handle existing files
-      setExistingFiles(lesson.downloadFiles || [])
+      // Handle existing files - map backend format to frontend display format
+      const mappedFiles = (lesson.downloadFiles || []).map(mapDownloadFileForDisplay)
+      setExistingFiles(mappedFiles)
       
       // Load cover image from public URL if available
       if (lesson.coverImage?.publicUrl) {
@@ -387,7 +389,7 @@ export default function CreateLessonPage() {
 
   const removeExistingFile = (fileId: string) => {
     setRemovedFileIds(prev => [...prev, fileId])
-    setExistingFiles(prev => prev.filter(f => f.url !== fileId))
+    setExistingFiles(prev => prev.filter(f => f.id !== fileId))
   }
 
   const formatFileSize = (bytes: number): string => {
@@ -396,6 +398,61 @@ export default function CreateLessonPage() {
     const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  // Helper function to map backend download file to frontend display format
+  const mapDownloadFileForDisplay = (file: any) => ({
+    id: file.id || file.publicUrl || file.url, // Use id, fallback to URL for identification
+    name: file.originalName || file.name,
+    type: file.mimeType || file.type,
+    size: file.sizeInBytes ? formatFileSize(file.sizeInBytes) : file.size,
+    url: file.publicUrl || file.url,
+    displayName: file.displayName || file.originalName || file.name,
+    extension: file.extension,
+    uploadedAt: file.uploadedAt,
+    downloadCount: file.downloadCount || 0
+  })
+
+  // Download file function with fallback logic
+  const handleFileDownload = async (file: any) => {
+    if (downloadingFileId === file.id) return // Prevent double downloads
+
+    try {
+      setDownloadingFileId(file.id)
+
+      if (file.url && file.url !== '' && file.url !== '#') {
+        // Direct download via public URL
+        const link = document.createElement('a')
+        link.href = file.url
+        link.download = file.name
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        toast.success('Download started', `Downloading ${file.name}`)
+      } else if (currentLessonId) {
+        // Secure download via API endpoint
+        const response = await axios.get(`/lessons/${currentLessonId}/files/${file.id}`)
+        const { downloadUrl } = response.data
+
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        link.download = file.name
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        toast.success('Download started', `Downloading ${file.name}`)
+      } else {
+        toast.error('Download failed', 'Unable to download file at this time')
+      }
+    } catch (error: any) {
+      console.error('Download error:', error)
+      const errorMessage = error.response?.data?.message || 'Failed to download file'
+      toast.error('Download failed', errorMessage)
+    } finally {
+      setDownloadingFileId(null)
+    }
   }
 
   const getLevelColor = (level: string) => {
@@ -1150,22 +1207,36 @@ export default function CreateLessonPage() {
               <div className="space-y-3">
                 {/* Existing Files */}
                 {existingFiles.map((file, index) => (
-                  <div key={`existing-${index}`} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div 
+                    key={`existing-${index}`} 
+                    className="relative p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/30 transition-colors"
+                    onClick={() => handleFileDownload(file)}
+                  >
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-blue-600" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{file.name}</p>
                         <p className="text-xs text-blue-700 dark:text-blue-300">{file.type} • {file.size}</p>
-                        <p className="text-xs text-blue-600 dark:text-blue-400">Existing file</p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                          {downloadingFileId === file.id ? 'Downloading...' : 'Existing file - Click to download'}
+                        </p>
                       </div>
                       <button
                         type="button"
-                        onClick={() => removeExistingFile(file.url)}
-                        className="text-red-500 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeExistingFile(file.id)
+                        }}
+                        className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20"
                       >
                         <X className="h-4 w-4" />
                       </button>
                     </div>
+                    {downloadingFileId === file.id && (
+                      <div className="absolute inset-0 bg-blue-50/80 dark:bg-blue-900/80 rounded-lg flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      </div>
+                    )}
                   </div>
                 ))}
                 
