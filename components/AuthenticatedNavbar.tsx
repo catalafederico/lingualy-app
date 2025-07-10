@@ -40,13 +40,23 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
   const [language, setLanguage] = useState<"en" | "es">("en")
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [isClient, setIsClient] = useState(false)
 
   // Initialize theme and language on component mount
   useEffect(() => {
+    // Mark as client-side to prevent hydration mismatch
+    setIsClient(true)
+    
     // Initialize theme
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
     if (savedTheme) {
       setTheme(savedTheme)
+      // Apply theme immediately to avoid flash
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark")
+      } else {
+        document.documentElement.classList.remove("dark")
+      }
     }
 
     // Initialize language
@@ -179,7 +189,7 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
         </Link>
         
         {/* Admin Backoffice Link */}
-        {isAdmin() && (
+        {isClient && isAdmin() && (
           <Link
             href="/backoffice"
             className={`text-sm font-medium hover:text-amber-600 transition-colors flex items-center gap-1 ${
@@ -213,7 +223,7 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {isLoadingUser ? 'Loading...' : userProfile?.email || 'No email available'}
                 </p>
-                {isAdmin() && (
+                {isClient && isAdmin() && (
                   <div className="flex items-center gap-1 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-2 py-1 rounded-full text-xs">
                     <Shield className="h-3 w-3" />
                     Admin

@@ -199,7 +199,7 @@ export const updateLessonWithFiles = async (
     downloadFiles?.forEach(file => formData.append('downloadFiles', file))
     if (removedFileIds?.length) formData.append('removedFiles', JSON.stringify(removedFileIds))
     
-    const response = await axios.put(`/lessons/${id}`, formData, {
+    const response = await axios.patch(`/lessons/${id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     return response.data
@@ -274,7 +274,33 @@ export const getLessonById = async (id: number): Promise<Lesson> => {
 };
 
 export const deleteLesson = async (id: number): Promise<void> => {
-  await axios.delete(`/lessons/${id}`);
+  try {
+    await axios.delete(`/lessons/${id}`);
+  } catch (error: any) {
+    // Handle specific error types
+    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+      throw new Error('Network connection failed. Please check your internet connection and try again.');
+    }
+    
+    if (error.response?.status === 404) {
+      throw new Error('Lesson not found. It may have been already deleted.');
+    }
+    
+    if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
+    if (error.response?.status === 403) {
+      throw new Error('Permission denied. You do not have access to delete this lesson.');
+    }
+    
+    if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    }
+    
+    // Generic error fallback
+    throw new Error(error.response?.data?.message || 'Failed to delete lesson. Please try again.');
+  }
 };
 
 export const downloadLesson = async (id: number): Promise<Lesson> => {
@@ -284,4 +310,31 @@ export const downloadLesson = async (id: number): Promise<Lesson> => {
 
 export const rateLesson = async (id: number, rating: number): Promise<void> => {
   await axios.post(`/lessons/${id}/rate`, { rating });
+};
+
+export const getDraftLessons = async (): Promise<Lesson[]> => {
+  try {
+    const response = await axios.get('/lessons/drafts');
+    return response.data;
+  } catch (error: any) {
+    // Handle specific error types
+    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+      throw new Error('Network connection failed. Please check your internet connection and try again.');
+    }
+    
+    if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
+    if (error.response?.status === 403) {
+      throw new Error('Permission denied. You do not have access to view draft lessons.');
+    }
+    
+    if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    }
+    
+    // Generic error fallback
+    throw new Error(error.response?.data?.message || 'Failed to load draft lessons. Please try again.');
+  }
 };

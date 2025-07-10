@@ -6,7 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
+import { getDraftLessons, deleteLesson } from "@/services/lessons/create-lesson"
+import { Lesson } from "@/services/lessons/get-lessons"
+import { toast } from "sonner"
 import {
   Sparkles,
   BookOpen,
@@ -75,53 +79,21 @@ const adminStats = [
   },
 ]
 
-// Mock draft lessons data
-const draftLessons = [
-  {
-    id: "draft-1",
-    title: "Advanced Grammar: Complex Sentences Structure",
-    description: "Master the art of writing complex sentences with proper punctuation.",
-    grade: "8-10",
-    subject: "Grammar",
-    lastEdited: "2 hours ago",
-    progress: 75,
-    createdBy: "Sarah Johnson",
-    status: "draft"
-  },
-  {
-    id: "draft-2", 
-    title: "Creative Writing: Building Suspense in Short Stories",
-    description: "Techniques for creating tension and engagement in narrative writing.",
-    grade: "6-8",
-    subject: "Creative Writing",
-    lastEdited: "1 day ago",
-    progress: 40,
-    createdBy: "Michael Chen",
-    status: "draft"
-  },
-  {
-    id: "draft-3",
-    title: "ESL Pronunciation: Common English Sounds",
-    description: "Help non-native speakers master difficult English phonemes.",
-    grade: "Adult",
-    subject: "ESL",
-    lastEdited: "3 days ago",
-    progress: 90,
-    createdBy: "Elena Rodriguez",
-    status: "draft"
-  },
-  {
-    id: "draft-4",
-    title: "Literature Analysis: Symbolism in Modern Poetry",
-    description: "Exploring symbolic elements in contemporary poetic works.",
-    grade: "9-12",
-    subject: "Literature",
-    lastEdited: "1 week ago",
-    progress: 25,
-    createdBy: "David Thompson",
-    status: "draft"
-  },
-]
+// Helper function to format relative time
+const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+  
+  if (diffInHours < 1) return 'Less than an hour ago'
+  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`
+  
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`
+  
+  const diffInWeeks = Math.floor(diffInDays / 7)
+  return `${diffInWeeks} week${diffInWeeks > 1 ? 's' : ''} ago`
+}
 
 // Mock recent activity data
 const recentActivity = [
@@ -165,9 +137,16 @@ export default function BackofficeAdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTab, setSelectedTab] = useState("overview")
+  const [draftLessons, setDraftLessons] = useState<Lesson[]>([])
+  const [isDraftLoading, setIsDraftLoading] = useState(false)
+  const [draftError, setDraftError] = useState<string | null>(null)
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; lessonId: number | null; lessonTitle: string }>({
+    isOpen: false,
+    lessonId: null,
+    lessonTitle: ""
+  })
 
   useEffect(() => {
     // Check authentication
@@ -187,28 +166,74 @@ export default function BackofficeAdminPage() {
     setIsAdmin(true)
     setIsLoading(false)
 
-    // Check for success message
-    const created = searchParams.get("created") === "true"
-    const published = searchParams.get("published") === "true"
-    if (created || published) {
-      setShowSuccessMessage(true)
-      router.replace("/backoffice")
-      setTimeout(() => setShowSuccessMessage(false), 5000)
-    }
   }, [router, searchParams])
 
-  const handleEditDraft = (lessonId: string) => {
-    router.push(`/backoffice/create-lesson?draft=${lessonId}`)
+  // Load draft lessons
+  useEffect(() => {
+    const loadDraftLessons = async () => {
+      if (!isAuthenticated || !isAdmin) return
+
+      setIsDraftLoading(true)
+      setDraftError(null)
+
+      try {
+        const drafts = await getDraftLessons()
+        setDraftLessons(drafts)
+      } catch (error) {
+        console.error('Failed to load draft lessons:', error)
+        setDraftError(error instanceof Error ? error.message : 'Failed to load draft lessons')
+      } finally {
+        setIsDraftLoading(false)
+      }
+    }
+
+    loadDraftLessons()
+  }, [isAuthenticated, isAdmin])
+
+  const handleEditDraft = (lessonId: number) => {
+    router.push(`/backoffice/create-lesson?edit=${lessonId}`)
   }
 
-  const handleDeleteDraft = (lessonId: string) => {
-    // TODO: Implement delete draft functionality
-    console.log("Delete draft:", lessonId)
+  const handleDeleteDraft = (lessonId: number, lessonTitle: string) => {
+    setDeleteModal({
+      isOpen: true,
+      lessonId,
+      lessonTitle
+    })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteModal.lessonId) return
+
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading('Deleting lesson...')
+
+      await deleteLesson(deleteModal.lessonId)
+      
+      // Remove from local state immediately for better UX
+      setDraftLessons(prev => prev.filter(lesson => lesson.id !== deleteModal.lessonId))
+      
+      // Close modal
+      setDeleteModal({ isOpen: false, lessonId: null, lessonTitle: "" })
+      
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast)
+      toast.success('Draft lesson deleted successfully')
+      
+    } catch (error) {
+      console.error('Failed to delete lesson:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete lesson')
+    }
+  }
+
+  const cancelDelete = () => {
+    setDeleteModal({ isOpen: false, lessonId: null, lessonTitle: "" })
   }
 
   const filteredDrafts = draftLessons.filter(lesson =>
-    lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lesson.subject.toLowerCase().includes(searchQuery.toLowerCase())
+    lesson.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    lesson.subject?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   if (isLoading) {
@@ -232,27 +257,6 @@ export default function BackofficeAdminPage() {
 
       <main className="flex-1">
         <div className="container mx-auto px-4 lg:px-6 py-8 space-y-8">
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-green-800 dark:text-green-200">
-                {searchParams.get("published") === "true" ? "Lesson Published Successfully!" : "Lesson Created Successfully!"}
-              </h3>
-              <p className="text-sm text-green-600 dark:text-green-300">
-                {searchParams.get("published") === "true" 
-                  ? "The lesson is now live and available to all users."
-                  : "The lesson has been saved as a draft and can be edited later."
-                }
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -324,7 +328,25 @@ export default function BackofficeAdminPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {filteredDrafts.length === 0 ? (
+                {isDraftLoading ? (
+                  <div className="text-center py-12">
+                    <Sparkles className="h-8 w-8 text-amber-600 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">Loading draft lessons...</p>
+                  </div>
+                ) : draftError ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.858-.833-2.828 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Failed to load draft lessons</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">{draftError}</p>
+                    <Button onClick={() => window.location.reload()}>
+                      Try Again
+                    </Button>
+                  </div>
+                ) : filteredDrafts.length === 0 ? (
                   <div className="text-center py-12">
                     <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No draft lessons found</h3>
@@ -354,20 +376,8 @@ export default function BackofficeAdminPage() {
                           <Badge variant="outline" className="text-xs">{lesson.grade}</Badge>
                           <Badge variant="outline" className="text-xs">{lesson.subject}</Badge>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            By {lesson.createdBy} • {lesson.lastEdited}
+                            By {lesson.author?.firstName} {lesson.author?.lastName} • {formatRelativeTime(lesson.updatedAt)}
                           </span>
-                        </div>
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-600 dark:text-gray-400">Progress</span>
-                            <span className="text-xs text-gray-600 dark:text-gray-400">{lesson.progress}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full"
-                              style={{ width: `${lesson.progress}%` }}
-                            />
-                          </div>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -383,7 +393,7 @@ export default function BackofficeAdminPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteDraft(lesson.id)}
+                          onClick={() => handleDeleteDraft(lesson.id, lesson.title)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -500,6 +510,37 @@ export default function BackofficeAdminPage() {
         </Tabs>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModal.isOpen} onOpenChange={cancelDelete}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <Trash2 className="h-4 w-4 text-red-600" />
+              </div>
+              Delete Draft Lesson
+            </DialogTitle>
+            <DialogDescription className="text-left">
+              Are you sure you want to delete <span className="font-medium">"{deleteModal.lessonTitle}"</span>? 
+              This action cannot be undone and all progress will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+            <Button variant="outline" onClick={cancelDelete}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

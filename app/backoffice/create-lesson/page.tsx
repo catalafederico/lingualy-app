@@ -38,7 +38,6 @@ import {
   MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
 import { createLesson, createLessonWithFiles, updateLessonWithFiles, getLessonById, CreateLessonData } from "@/services/lessons/create-lesson"
 import type { LessonProcedure } from "@/services/lessons/get-lessons"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
@@ -160,14 +159,12 @@ const durations = [
 
 export default function CreateLessonPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const editId = searchParams.get('edit')
-  
   // Core state
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitType, setSubmitType] = useState<'draft' | 'publish'>('draft')
   const [isLoadingLesson, setIsLoadingLesson] = useState(false)
-  const [currentLessonId, setCurrentLessonId] = useState<number | null>(editId ? parseInt(editId) : null)
+  const [currentLessonId, setCurrentLessonId] = useState<number | null>(null)
+  const [isClient, setIsClient] = useState(false)
   
   // Form input state
   const [newTag, setNewTag] = useState("")
@@ -189,6 +186,20 @@ export default function CreateLessonPage() {
   const [removedFileIds, setRemovedFileIds] = useState<string[]>([])
   const [coverImageChanged, setCoverImageChanged] = useState(false)
 
+  // Client-side hydration and URL parameter handling
+  useEffect(() => {
+    setIsClient(true)
+    
+    // Handle URL parameters client-side to avoid hydration issues
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const editId = urlParams.get('edit')
+      if (editId) {
+        setCurrentLessonId(parseInt(editId))
+      }
+    }
+  }, [])
+
   // Admin access check
   useEffect(() => {
     if (!checkIsAuthenticated()) {
@@ -201,6 +212,28 @@ export default function CreateLessonPage() {
       return
     }
   }, [router])
+
+  // Compute page title and description to avoid hydration mismatch
+  // Always show 'Create New Lesson' initially to avoid hydration mismatch
+  const pageTitle = 'Create New Lesson'
+  const pageDescription = 'Build engaging content for your students'
+  
+  // Dynamic title and description that updates after hydration
+  const [dynamicTitle, setDynamicTitle] = useState(pageTitle)
+  const [dynamicDescription, setDynamicDescription] = useState(pageDescription)
+  
+  // Update dynamic title once we know if we're in edit mode
+  useEffect(() => {
+    if (isClient) {
+      if (currentLessonId) {
+        setDynamicTitle('Edit Lesson')
+        setDynamicDescription('Update your lesson content')
+      } else {
+        setDynamicTitle('Create New Lesson')
+        setDynamicDescription('Build engaging content for your students')
+      }
+    }
+  }, [isClient, currentLessonId])
 
   // Load existing lesson data when editing
   useEffect(() => {
@@ -215,6 +248,7 @@ export default function CreateLessonPage() {
     try {
       setIsLoadingLesson(true)
       const lesson = await getLessonById(currentLessonId)
+      
       
       // Populate form with existing data
       setValue('title', lesson.title)
@@ -269,13 +303,13 @@ export default function CreateLessonPage() {
     },
   })
 
-  const watchedTags = watch("tags") || []
-  const watchedObjectives = watch("objectives") || []
-  const watchedMaterials = watch("materials") || []
-  const watchedProcedures = watch("procedures") || []
-  const watchedAssessment = watch("assessment") || []
-  const watchedLessonActivities = watch("lessonActivities") || []
-  const watchedDownloadFiles = watch("downloadFiles") || []
+  const watchedTags = Array.isArray(watch("tags")) ? watch("tags")! : []
+  const watchedObjectives = Array.isArray(watch("objectives")) ? watch("objectives")! : []
+  const watchedMaterials = Array.isArray(watch("materials")) ? watch("materials")! : []
+  const watchedProcedures = Array.isArray(watch("procedures")) ? watch("procedures")! : []
+  const watchedAssessment = Array.isArray(watch("assessment")) ? watch("assessment")! : []
+  const watchedLessonActivities = Array.isArray(watch("lessonActivities")) ? watch("lessonActivities")! : []
+  const watchedDownloadFiles = Array.isArray(watch("downloadFiles")) ? watch("downloadFiles")! : []
 
   const addTag = () => {
     if (newTag.trim() && !watchedTags.includes(newTag.trim())) {
@@ -432,6 +466,7 @@ export default function CreateLessonPage() {
       setIsSubmitting(true)
       setSubmitType(type)
 
+
       // Validate against appropriate schema based on submission type
       if (type === 'publish') {
         try {
@@ -455,16 +490,16 @@ export default function CreateLessonPage() {
         subject: data.subject || '',
         duration: data.duration || '',
         difficulty: data.difficulty,
-        tags: data.tags?.filter(tag => tag?.trim()) || [],
-        objectives: data.objectives?.filter(obj => obj?.trim()) || [],
-        materials: data.materials?.filter(mat => mat?.trim()) || [],
-        procedures: data.procedures?.filter(proc => 
-          proc?.title?.trim() && proc?.duration?.trim() && proc?.description?.trim()) || [],
-        assessment: data.assessment?.filter(ass => ass?.trim()) || [],
-        lessonActivities: data.lessonActivities?.filter(activity => 
-          activity?.skill?.trim() && activity?.description?.trim()) || [],
+        tags: Array.isArray(data.tags) ? data.tags.filter(tag => tag && tag.trim()) : [],
+        objectives: Array.isArray(data.objectives) ? data.objectives.filter(obj => obj && obj.trim()) : [],
+        materials: Array.isArray(data.materials) ? data.materials.filter(mat => mat && mat.trim()) : [],
+        procedures: Array.isArray(data.procedures) ? data.procedures.filter(proc => 
+          proc && proc.title && proc.title.trim() && proc.duration && proc.duration.trim() && proc.description && proc.description.trim()) : [],
+        assessment: Array.isArray(data.assessment) ? data.assessment.filter(ass => ass && ass.trim()) : [],
+        lessonActivities: Array.isArray(data.lessonActivities) ? data.lessonActivities.filter(activity => 
+          activity && activity.skill && activity.skill.trim() && activity.description && activity.description.trim()) : [],
         isPremium: data.isPremium || false,
-        action: type === 'publish' ? 'publish' : 'save',
+        action: type === 'publish' ? 'publish' as const : 'save' as const,
       }
 
       let result
@@ -475,7 +510,7 @@ export default function CreateLessonPage() {
         result = await updateLessonWithFiles(
           currentLessonId!,
           lessonData,
-          coverImageChanged ? previewImageFile : undefined,
+          coverImageChanged ? (previewImageFile || undefined) : undefined,
           downloadFiles,
           removedFileIds
         )
@@ -502,7 +537,14 @@ export default function CreateLessonPage() {
       setPreviewImageFile(null)
 
       // Navigate back to backoffice with success message
-      const message = type === 'publish' ? 'published=true' : 'created=true'
+      let message: string
+      if (type === 'publish') {
+        message = 'published=true'
+      } else if (isUpdate) {
+        message = 'saved=true'
+      } else {
+        message = 'created=true'
+      }
       router.push(`/backoffice?${message}`)
 
     } catch (error) {
@@ -516,13 +558,26 @@ export default function CreateLessonPage() {
   // For draft, bypass form validation and get raw form data
   const handleSaveDraft = async () => {
     const formData = getValues()
-    await onSubmit(formData, 'draft')
+    
+    // Ensure all array fields are properly initialized to prevent filter errors
+    const safeFormData = {
+      ...formData,
+      tags: Array.isArray(formData.tags) ? formData.tags : [],
+      objectives: Array.isArray(formData.objectives) ? formData.objectives : [],
+      materials: Array.isArray(formData.materials) ? formData.materials : [],
+      procedures: Array.isArray(formData.procedures) ? formData.procedures : [],
+      assessment: Array.isArray(formData.assessment) ? formData.assessment : [],
+      lessonActivities: Array.isArray(formData.lessonActivities) ? formData.lessonActivities : [],
+      downloadFiles: Array.isArray(formData.downloadFiles) ? formData.downloadFiles : [],
+    }
+    
+    await onSubmit(safeFormData, 'draft')
   }
   
   // For publish, use form validation
   const handlePublish = handleSubmit((data) => onSubmit(data, 'publish'))
 
-  // Loading state
+  // Loading state - only show loading when actually loading lesson data
   if (isLoadingLesson) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -531,7 +586,9 @@ export default function CreateLessonPage() {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading lesson data...</p>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">
+                Loading lesson data...
+              </p>
             </div>
           </div>
         </main>
@@ -558,10 +615,10 @@ export default function CreateLessonPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {currentLessonId ? 'Edit Lesson' : 'Create New Lesson'}
+                  {dynamicTitle}
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {currentLessonId ? 'Update your lesson content' : 'Build engaging content for your students'}
+                  {dynamicDescription}
                 </p>
               </div>
             </div>
@@ -745,7 +802,7 @@ export default function CreateLessonPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="grade">Grade Level *</Label>
-                  <Select onValueChange={(value) => setValue("grade", value)}>
+                  <Select onValueChange={(value) => setValue("grade", value)} value={watch("grade") || ""}>
                     <SelectTrigger className={`w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${errors.grade ? "border-red-500" : ""}`}>
                       <SelectValue placeholder="Select grade level" />
                     </SelectTrigger>
@@ -764,7 +821,7 @@ export default function CreateLessonPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject *</Label>
-                  <Select onValueChange={(value) => setValue("subject", value)}>
+                  <Select onValueChange={(value) => setValue("subject", value)} value={watch("subject") || ""}>
                     <SelectTrigger className={`w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${errors.subject ? "border-red-500" : ""}`}>
                       <SelectValue placeholder="Select subject" />
                     </SelectTrigger>
@@ -783,7 +840,7 @@ export default function CreateLessonPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="duration">Duration *</Label>
-                  <Select onValueChange={(value) => setValue("duration", value)}>
+                  <Select onValueChange={(value) => setValue("duration", value)} value={watch("duration") || ""}>
                     <SelectTrigger className={`w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 ${errors.duration ? "border-red-500" : ""}`}>
                       <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
@@ -802,7 +859,7 @@ export default function CreateLessonPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="difficulty">Difficulty Level</Label>
-                  <Select onValueChange={(value) => setValue("difficulty", value as "Beginner" | "Intermediate" | "HARD")}>
+                  <Select onValueChange={(value) => setValue("difficulty", value as "Beginner" | "Intermediate" | "HARD")} value={watch("difficulty") || ""}>
                     <SelectTrigger className="w-full min-w-[180px] bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
@@ -1212,7 +1269,7 @@ export default function CreateLessonPage() {
                 {/* Badges */}
                 <div className="absolute top-4 right-4">
                   {watch("difficulty") && (
-                    <Badge className={getDifficultyColor(watch("difficulty"))}>
+                    <Badge className={getDifficultyColor(watch("difficulty") || "")}>
                       {watch("difficulty") === "Beginner" ? "Beginner" : 
                        watch("difficulty") === "Intermediate" ? "Intermediate" : 
                        watch("difficulty") === "HARD" ? "Advanced" : 
