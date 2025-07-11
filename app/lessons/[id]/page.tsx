@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getLessonById, downloadLesson, downloadFile, type Lesson } from "@/services/lessons"
+import { getLessonById, downloadFile, rateLesson, type Lesson } from "@/services/lessons"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
 import {
   BookOpen,
   Clock,
@@ -22,7 +23,6 @@ import {
   Share2,
   Heart,
   Bookmark,
-  Printer,
   Calendar,
   Award,
   Lightbulb,
@@ -44,6 +44,9 @@ export default function LessonDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null)
+  const [userRating, setUserRating] = useState<number>(0)
+  const [isRatingLoading, setIsRatingLoading] = useState(false)
+  const [hoveredRating, setHoveredRating] = useState<number>(0)
 
   useEffect(() => {
     // Check authentication
@@ -70,15 +73,31 @@ export default function LessonDetailPage() {
     }
   }
 
-  const handleDownload = async () => {
-    if (!lesson) return
+  const handleRating = async (rating: number) => {
+    if (!lesson || isRatingLoading) return
     
     try {
-      await downloadLesson(lesson.id)
-      // You could show a success message here
+      setIsRatingLoading(true)
+      await rateLesson(lesson.id, rating)
+      // Only update user rating, not the lesson's overall rating
+      setUserRating(rating)
+      toast.success('Thank you for rating this lesson!')
     } catch (error) {
-      console.error('Error downloading lesson:', error)
-      // You could show an error message here
+      console.error('Error rating lesson:', error)
+      toast.error('Failed to submit rating. Please try again.')
+    } finally {
+      setIsRatingLoading(false)
+    }
+  }
+
+  const handleShare = async () => {
+    try {
+      const lessonUrl = `${window.location.origin}/lessons/${lessonId}`
+      await navigator.clipboard.writeText(lessonUrl)
+      toast.success('Link copied to clipboard!')
+    } catch (error) {
+      console.error('Error copying to clipboard:', error)
+      toast.error('Failed to copy link')
     }
   }
 
@@ -177,7 +196,7 @@ export default function LessonDetailPage() {
       <AuthenticatedNavbar currentPage="lessons" />
 
       <main className="flex-1 py-8 px-4">
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-8" data-lesson-content>
           {/* Back Button */}
           <div className="flex items-center gap-4">
             <Button
@@ -195,7 +214,7 @@ export default function LessonDetailPage() {
             {/* Left Column - Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Hero Section */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
+              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 lesson-header">
                 <div className="relative overflow-hidden rounded-t-lg">
                   <img
                     src={lesson.coverImage?.publicUrl || "/placeholder.svg"}
@@ -290,7 +309,7 @@ export default function LessonDetailPage() {
                       <TabsTrigger value="assessment">Assessment</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="overview" className="space-y-6 mt-6">
+                    <TabsContent value="overview" className="space-y-6 mt-6" data-tab="overview">
                       {/* Learning Objectives */}
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
@@ -331,7 +350,7 @@ export default function LessonDetailPage() {
                       </div>
                     </TabsContent>
                     
-                    <TabsContent value="procedures" className="space-y-4 mt-6">
+                    <TabsContent value="procedures" className="space-y-4 mt-6" data-tab="procedures">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                         <PlayCircle className="h-5 w-5 text-amber-600" />
                         Lesson Procedures
@@ -352,7 +371,7 @@ export default function LessonDetailPage() {
                       ))}
                     </TabsContent>
                     
-                    <TabsContent value="materials" className="space-y-4 mt-6">
+                    <TabsContent value="materials" className="space-y-4 mt-6" data-tab="materials">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                         <FileText className="h-5 w-5 text-amber-600" />
                         Required Materials
@@ -367,7 +386,7 @@ export default function LessonDetailPage() {
                       </div>
                     </TabsContent>
                     
-                    <TabsContent value="assessment" className="space-y-4 mt-6">
+                    <TabsContent value="assessment" className="space-y-4 mt-6" data-tab="assessment">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                         <MessageSquare className="h-5 w-5 text-amber-600" />
                         Assessment Criteria
@@ -393,29 +412,52 @@ export default function LessonDetailPage() {
               {/* Action Buttons */}
               <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
                 <CardContent className="p-6 space-y-4">
-                  <Button 
-                    onClick={handleDownload}
-                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Lesson
-                  </Button>
+                  {/* User Rating Section - Separate from lesson's overall rating */}
+                  <div className="text-center space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rate this lesson</h3>
+                    <div className="flex items-center justify-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => handleRating(star)}
+                          onMouseEnter={() => setHoveredRating(star)}
+                          onMouseLeave={() => setHoveredRating(0)}
+                          disabled={isRatingLoading}
+                          className="p-1 hover:scale-110 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Star 
+                            className={`h-8 w-8 transition-colors duration-200 ${
+                              star <= (hoveredRating || userRating) 
+                                ? 'text-yellow-400 fill-yellow-400' 
+                                : 'text-gray-300 dark:text-gray-600'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    {userRating > 0 && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        You rated this lesson {userRating} star{userRating !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                    {isRatingLoading && (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600"></div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Submitting rating...</span>
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setIsBookmarked(!isBookmarked)}>
+                    <Button variant="outline" size="sm" onClick={() => setIsBookmarked(!isBookmarked)} className="bookmark-button">
                       <Bookmark className={`h-4 w-4 mr-1 ${isBookmarked ? 'fill-current' : ''}`} />
                       Save
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={handleShare} className="share-button">
                       <Share2 className="h-4 w-4 mr-1" />
                       Share
                     </Button>
                   </div>
-                  
-                  <Button variant="outline" className="w-full">
-                    <Printer className="h-4 w-4 mr-2" />
-                    Print Version
-                  </Button>
                 </CardContent>
               </Card>
 
