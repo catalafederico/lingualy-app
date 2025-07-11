@@ -4,29 +4,55 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 import { 
   Sparkles,
-  Check, 
-  X, 
   BookOpen, 
   Users, 
   Award, 
   Clock, 
   Star, 
   ArrowRight, 
-  Zap
+  Zap,
+  Plus,
+  Minus,
+  CreditCard,
+  Calendar
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
+import { getPricingOptions, PricingOptions } from "@/services/pricing"
 
 export default function PricingPage() {
   const router = useRouter()
-  const [isAnnual, setIsAnnual] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [language, setLanguage] = useState<"en" | "es">("en")
+  
+  // New state for credits and subscription
+  const [creditQuantity, setCreditQuantity] = useState(1)
+  const [selectedDuration, setSelectedDuration] = useState("3months")
+  const [creditSelectionType, setCreditSelectionType] = useState("custom")
+  const [pricingData, setPricingData] = useState<PricingOptions | null>(null)
+  const [isPricingLoading, setIsPricingLoading] = useState(true)
+
+  // Fetch pricing data
+  const fetchPricingData = async () => {
+    try {
+      const pricing = await getPricingOptions()
+      setPricingData(pricing)
+      // Set default subscription duration from first option
+      if (pricing.subscriptions.length > 0) {
+        setSelectedDuration(pricing.subscriptions[0].duration)
+      }
+    } catch (error) {
+      console.error('Failed to fetch pricing data:', error)
+    } finally {
+      setIsPricingLoading(false)
+    }
+  }
 
   // Check authentication on mount
   useEffect(() => {
@@ -38,6 +64,9 @@ export default function PricingPage() {
     if (savedLanguage) {
       setLanguage(savedLanguage)
     }
+
+    // Fetch pricing data
+    fetchPricingData()
 
     setIsLoading(false)
   }, [])
@@ -83,71 +112,46 @@ export default function PricingPage() {
 
   const currentText = t[language]
 
-  const plans = [
-    {
-      name: "Starter",
-      description: "Perfect for new teachers getting started",
-      monthlyPrice: 19,
-      annualPrice: 190,
-      savings: 38,
-      features: [
-        { name: "500+ Lesson Plans", included: true },
-        { name: "Basic Worksheets", included: true },
-        { name: "Email Support", included: true },
-        { name: "Mobile Access", included: true },
-        { name: "Print-Ready Materials", included: true },
-        { name: "Advanced Assessment Tools", included: false },
-        { name: "Video Tutorials", included: false },
-        { name: "Priority Support", included: false },
-        { name: "Custom Branding", included: false },
-        { name: "Bulk Downloads", included: false },
-      ],
-      popular: false,
-      color: "amber",
-    },
-    {
-      name: "Professional",
-      description: "Most popular for experienced educators",
-      monthlyPrice: 39,
-      annualPrice: 390,
-      savings: 78,
-      features: [
-        { name: "2,000+ Lesson Plans", included: true },
-        { name: "Premium Worksheets", included: true },
-        { name: "Priority Email Support", included: true },
-        { name: "Mobile & Desktop Access", included: true },
-        { name: "Print-Ready Materials", included: true },
-        { name: "Advanced Assessment Tools", included: true },
-        { name: "Video Tutorials", included: true },
-        { name: "Priority Support", included: true },
-        { name: "Custom Branding", included: false },
-        { name: "Bulk Downloads", included: true },
-      ],
-      popular: true,
-      color: "orange",
-    },
-    {
-      name: "School",
-      description: "Best for schools and departments",
-      monthlyPrice: 79,
-      annualPrice: 790,
-      savings: 158,
-      features: [
-        { name: "Unlimited Lesson Plans", included: true },
-        { name: "All Premium Content", included: true },
-        { name: "24/7 Phone & Email Support", included: true },
-        { name: "All Device Access", included: true },
-        { name: "Print-Ready Materials", included: true },
-        { name: "Advanced Assessment Tools", included: true },
-        { name: "Video Tutorials", included: true },
-        { name: "Priority Support", included: true },
-        { name: "Custom Branding", included: true },
-        { name: "Bulk Downloads", included: true },
-      ],
-      popular: false,
-      color: "yellow",
-    },
-  ]
+  // Credit management functions
+  const incrementCredits = () => {
+    setCreditQuantity(prev => Math.min(prev + 1, 100))
+  }
+
+  const decrementCredits = () => {
+    setCreditQuantity(prev => Math.max(prev - 1, 1))
+  }
+
+  const handleCreditSelectionChange = (value: string) => {
+    setCreditSelectionType(value)
+  }
+
+  // Calculate current credit price
+  const getCurrentCreditPrice = () => {
+    if (!pricingData) return 0
+    
+    if (creditSelectionType === "preset5") {
+      return pricingData.credits.presetOptions.find(opt => opt.quantity === 5)?.price || 0
+    } else if (creditSelectionType === "preset10") {
+      return pricingData.credits.presetOptions.find(opt => opt.quantity === 10)?.price || 0
+    } else {
+      return creditQuantity * pricingData.credits.unitPrice
+    }
+  }
+
+  // Get custom quantity price (always independent)
+  const getCustomQuantityPrice = () => {
+    if (!pricingData) return 0
+    return creditQuantity * pricingData.credits.unitPrice
+  }
+
+  // Get current credit quantity for display
+  const getCurrentCreditQuantity = () => {
+    if (creditSelectionType === "preset5") return 5
+    if (creditSelectionType === "preset10") return 10
+    return creditQuantity
+  }
+
+
 
   const faqs = [
     {
@@ -226,140 +230,188 @@ export default function PricingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative w-full py-6 md:py-8 overflow-hidden">
+        <section className="relative w-full py-4 md:py-6 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"></div>
           <div className="absolute top-10 left-10 w-48 h-48 bg-amber-200 dark:bg-amber-600 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
           <div className="absolute top-20 right-10 w-48 h-48 bg-orange-200 dark:bg-orange-600 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
 
           <div className="container relative px-4 md:px-6">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 text-center">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center">
-                Choose Your
-                <span className="block bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent mt-1">
-                  Teaching Plan
-                </span>
+            <div className="text-center space-y-4">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+                Choose Your <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Access Plan</span>
               </h1>
-
-              {/* Billing Toggle */}
-              <div className="flex items-center justify-center gap-2 sm:gap-4 p-1 bg-white dark:bg-slate-800 rounded-full shadow-lg border dark:border-gray-600">
-                <span
-                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${!isAnnual ? "text-amber-600" : "text-gray-600 dark:text-gray-300"}`}
-                >
-                  Monthly
-                </span>
-                <Switch
-                  checked={isAnnual}
-                  onCheckedChange={setIsAnnual}
-                  className="data-[state=checked]:bg-amber-500"
-                />
-                <span
-                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${isAnnual ? "text-amber-600" : "text-gray-600 dark:text-gray-300"}`}
-                >
-                  Annual
-                </span>
-                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 ml-2">
-                  Save 20%
-                </Badge>
-              </div>
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Get the lessons you need with flexible pricing options
+              </p>
             </div>
           </div>
         </section>
 
-        {/* Pricing Cards */}
+        {/* Pricing Options */}
         <section className="w-full py-20 bg-white dark:bg-slate-900">
-          <div className="container px-4 md:px-6 text-center">
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 w-full justify-items-center">
-              {plans.map((plan, index) => (
-                <Card
-                  key={plan.name}
-                  className={`relative border-2 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 ${
-                    plan.popular
-                      ? "border-orange-300 bg-gradient-to-br from-white to-orange-50 dark:from-slate-800 dark:to-orange-900/20 dark:border-orange-600"
-                      : "border-gray-200 dark:border-gray-600 bg-white dark:bg-slate-800"
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1 text-sm font-medium">
-                        <Star className="h-3 w-3 mr-1" />
-                        Most Popular
-                      </Badge>
-                    </div>
-                  )}
+          <div className="container px-4 md:px-6">
+            <div className="grid gap-12 lg:grid-cols-2">
+              
+              {/* Lesson Credits Section */}
+              <div className="space-y-8">
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto">
+                    <CreditCard className="h-8 w-8 text-white" />
+                  </div>
+                  <h2 className="text-3xl font-bold">Lesson Credits</h2>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Pay as you go. Perfect for occasional use.
+                  </p>
+                </div>
 
-                  <CardHeader className="text-center pb-8 pt-8">
-                    <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                    <CardDescription className="text-gray-600 dark:text-gray-300 mt-2">{plan.description}</CardDescription>
+                <Card className="border-2 border-amber-200 dark:border-amber-600 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 min-h-[400px]">
+                  <CardContent className="p-8 flex flex-col h-full">
+                    <div className="space-y-6 flex-1">
+                      <h3 className="text-xl font-semibold text-center">Choose Credits</h3>
+                      
+                      {isPricingLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+                          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading pricing options...</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-w-md mx-auto">
+                          {/* Custom Credits Option */}
+                          <div className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors min-h-[72px]">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  decrementCredits();
+                                  setCreditSelectionType("custom");
+                                }}
+                                disabled={creditQuantity <= 1}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Minus className="h-2 w-2" />
+                              </Button>
+                              <div className="text-base font-bold w-10 text-center">
+                                {creditQuantity}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  incrementCredits();
+                                  setCreditSelectionType("custom");
+                                }}
+                                disabled={creditQuantity >= 100}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Plus className="h-2 w-2" />
+                              </Button>
+                            </div>
+                            <div className="flex-1 cursor-pointer" onClick={() => setCreditSelectionType("custom")}>
+                              <div className="text-base font-semibold">Credits</div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">Choose your own amount</div>
+                            </div>
+                            <div className="text-xl font-bold text-amber-600 min-w-[100px] text-right">
+                              ${getCustomQuantityPrice().toFixed(2)} USD
+                            </div>
+                          </div>
 
-                    <div className="mt-6">
-                      <div className="flex items-baseline justify-center gap-2">
-                        <span className="text-4xl font-bold text-gray-900 dark:text-white">
-                          ${isAnnual ? Math.floor(plan.annualPrice / 12) : plan.monthlyPrice}
-                        </span>
-                        <span className="text-gray-600 dark:text-gray-300">/month</span>
-                      </div>
-
-                      {isAnnual && (
-                        <div className="mt-2 space-y-1">
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Billed annually: ${plan.annualPrice}</p>
-                          <Badge variant="secondary" className="bg-green-100 text-green-700">
-                            Save ${plan.savings}/year
-                          </Badge>
+                          {/* Preset Options */}
+                          <RadioGroup 
+                            value={creditSelectionType} 
+                            onValueChange={handleCreditSelectionChange} 
+                            className="space-y-4"
+                          >
+                            {pricingData?.credits.presetOptions.map((preset) => (
+                              <div key={preset.quantity} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors min-h-[72px]">
+                                <RadioGroupItem value={`preset${preset.quantity}`} id={`preset${preset.quantity}`} />
+                                <Label htmlFor={`preset${preset.quantity}`} className="flex-1 cursor-pointer">
+                                  <div className="text-base font-semibold">{preset.quantity} Credits</div>
+                                  {preset.savings && (
+                                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium mt-1">
+                                      <span>💰</span>
+                                      {preset.savings}
+                                    </div>
+                                  )}
+                                </Label>
+                                <div className="text-xl font-bold text-amber-600 min-w-[100px] text-right">
+                                  ${preset.price.toFixed(2)} USD
+                                </div>
+                              </div>
+                            ))}
+                          </RadioGroup>
                         </div>
                       )}
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-6">
-                    <Link href="/signup">
-                      <Button
-                        className={`w-full h-12 shadow-lg hover:shadow-xl transition-all duration-300 ${
-                          plan.popular
-                            ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
-                            : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                        }`}
-                      >
-                        Get Started
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
-
-                    <div className="space-y-3">
-                      {plan.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-center gap-3">
-                          {feature.included ? (
-                            <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
-                          ) : (
-                            <X className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                          )}
-                          <span className={`text-sm ${feature.included ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
-                            {feature.name}
-                          </span>
-                        </div>
-                      ))}
+                      
+                      <div className="max-w-md mx-auto">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                          disabled={isPricingLoading}
+                        >
+                          Buy {getCurrentCreditQuantity()} credit{getCurrentCreditQuantity() !== 1 ? 's' : ''} now
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+              </div>
 
-            {/* Enterprise CTA */}
-            <div className="mt-20 text-center">
-              <Card className="max-w-2xl mx-auto border-2 border-amber-200 dark:border-amber-600 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 dark:bg-slate-800">
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-center mb-4">
-                    <Zap className="h-8 w-8 text-amber-600" />
+              {/* Full Access Subscription Section */}
+              <div className="space-y-8">
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto">
+                    <Calendar className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Need Something Custom?</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6">
-                    Perfect for large schools, districts, or organizations with specific needs. Get custom pricing,
-                    dedicated support, and tailored solutions.
+                  <h2 className="text-3xl font-bold">Full Access</h2>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Unlimited lessons. Best value for regular users.
                   </p>
-                  <Button variant="outline" className="border-amber-300 dark:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20">
-                    Contact Sales
-                  </Button>
-                </CardContent>
-              </Card>
+                </div>
+
+                <Card className="border-2 border-orange-200 dark:border-orange-600 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 min-h-[400px]">
+                  <CardContent className="p-8 flex flex-col h-full">
+                    <div className="space-y-6 flex-1">
+                      <h3 className="text-xl font-semibold text-center">Choose Duration</h3>
+                      
+                      {isPricingLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+                          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading pricing options...</p>
+                        </div>
+                      ) : (
+                        <RadioGroup value={selectedDuration} onValueChange={setSelectedDuration} className="space-y-4 max-w-md mx-auto">
+                          {pricingData?.subscriptions.map((option) => (
+                            <div key={option.duration} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors min-h-[72px]">
+                              <RadioGroupItem value={option.duration} id={option.duration} />
+                              <Label htmlFor={option.duration} className="flex-1 cursor-pointer">
+                                <div className="text-base font-semibold">{option.label}</div>
+                                {option.savings && (
+                                  <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium mt-1">
+                                    <span>💰</span>
+                                    {option.savings}
+                                  </div>
+                                )}
+                              </Label>
+                              <div className="text-xl font-bold text-orange-600 min-w-[100px] text-right">
+                                ${option.price.toFixed(2)} USD
+                              </div>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      )}
+                      
+                      <div className="max-w-md mx-auto">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+                          disabled={isPricingLoading}
+                        >
+                          Subscribe now
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </section>
