@@ -473,86 +473,76 @@ export default function HomePage() {
                 <>
                   <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                     {lessons.lessons.map((lesson) => (
-                    <Card
-                      key={lesson.id}
-                      className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group bg-white dark:bg-gray-800"
-                    >
-                      <div className="relative overflow-hidden rounded-t-lg">
-                        <img
-                          src={lesson.coverImage?.publicUrl || "/placeholder.svg"}
-                          alt={lesson.title}
-                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute top-4 right-4">
-                          <Badge className={getLevelColor(lesson.level)}>{lesson.level}</Badge>
-                        </div>
-                        <div className="absolute top-4 left-4 flex flex-col gap-2">
-                          {lesson.isNew && (
-                            <Badge className="bg-green-500 text-white">New</Badge>
-                          )}
-                          <Badge className={lesson.isPremium ? "bg-amber-500 text-white" : "bg-blue-500 text-white"}>
-                            {lesson.isPremium ? "Premium" : "Free"}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <CardHeader className="pb-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            {lesson.level}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {lesson.category}
-                          </Badge>
-                        </div>
-                        <CardTitle className="text-lg leading-tight text-gray-900 dark:text-gray-100">
-                          {lesson.title}
-                        </CardTitle>
-                        <CardDescription className="text-gray-600 dark:text-gray-400">{lesson.description}</CardDescription>
-                      </CardHeader>
-
-                      <CardContent className="pt-0">
-                        <div className="flex items-center justify-between mb-4 text-sm text-gray-600 dark:text-gray-400">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{lesson.duration}</span>
+                    <Link href={`/lessons/${lesson.id}`} key={lesson.id} className="block group">
+                      <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group-hover:scale-[1.02] bg-white dark:bg-gray-800 cursor-pointer">
+                        <div className="relative overflow-hidden rounded-t-lg">
+                          <img
+                            src={lesson.coverImage?.publicUrl || "/placeholder.svg"}
+                            alt={lesson.title}
+                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute top-4 right-4">
+                            <Badge className={getLevelColor(lesson.level)}>{lesson.level}</Badge>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span>{lesson.rating}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Download className="h-4 w-4" />
-                            <span>{lesson.downloads.toLocaleString()}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1 mb-4 min-h-[24px]">
-                          {lesson.tags?.map((tag, tagIndex) => (
-                            <Badge key={tagIndex} variant="secondary" className="text-xs">
-                              {tag}
+                          <div className="absolute top-4 left-4 flex flex-col gap-2">
+                            {lesson.isNew && (
+                              <Badge className="bg-green-500 text-white">New</Badge>
+                            )}
+                            <Badge className={lesson.isPremium ? "bg-amber-500 text-white" : "bg-blue-500 text-white"}>
+                              {lesson.isPremium ? "Premium" : "Free"}
                             </Badge>
-                          ))}
+                          </div>
                         </div>
 
-                        <div className="flex gap-2">
-                          <Link href={`/lessons/${lesson.id}`} className="flex-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="w-full border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              Preview
-                            </Button>
-                          </Link>
-                          <Button size="sm" className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
+                        <CardHeader className="pb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="text-xs">
+                              {lesson.level}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {lesson.category}
+                            </Badge>
+                          </div>
+                          <CardTitle className="text-lg leading-tight text-gray-900 dark:text-gray-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                            {lesson.title}
+                          </CardTitle>
+                          <CardDescription className="text-gray-600 dark:text-gray-400">{lesson.description}</CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="pt-0">
+                          <div className="flex items-center justify-between mb-4 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{lesson.duration}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <span>{lesson.rating}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Download className="h-4 w-4" />
+                              <span>{lesson.downloads.toLocaleString()}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1 mb-4 min-h-[24px]">
+                            {lesson.tags?.map((tag, tagIndex) => (
+                              <Badge key={tagIndex} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          <Button
+                            size="sm"
+                            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all duration-200"
+                          >
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            Go to lesson
                           </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                     ))}
                   </div>
 
