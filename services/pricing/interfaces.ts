@@ -1,4 +1,5 @@
 export interface CreditPresetOption {
+  id: number;
   quantity: number;
   price: number;
   savings?: string;
@@ -6,11 +7,12 @@ export interface CreditPresetOption {
 
 export interface CreditPricing {
   unitPrice: number;
+  unitPricingId: number;
   presetOptions: CreditPresetOption[];
 }
 
 export interface SubscriptionOption {
-  id: string;
+  id: number;
   duration: string;
   label: string;
   price: number;

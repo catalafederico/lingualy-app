@@ -151,6 +151,43 @@ export default function PricingPage() {
     return creditQuantity
   }
 
+  // Handle credit purchase
+  const handleCreditPurchase = () => {
+    if (!isAuthenticated) {
+      router.push('/login?redirect=/pricing')
+      return
+    }
+    
+    const params = new URLSearchParams({
+      type: 'credits',
+      quantity: getCurrentCreditQuantity().toString(),
+      selection: creditSelectionType
+    })
+    
+    router.push(`/checkout?${params.toString()}`)
+  }
+
+  // Handle subscription purchase
+  const handleSubscriptionPurchase = () => {
+    if (!isAuthenticated) {
+      router.push('/login?redirect=/pricing')
+      return
+    }
+    
+    const selectedSubscription = pricingData?.subscriptions.find(
+      sub => sub.duration === selectedDuration
+    )
+    
+    if (selectedSubscription) {
+      const params = new URLSearchParams({
+        type: 'subscription',
+        id: selectedSubscription.id.toString()
+      })
+      
+      router.push(`/checkout?${params.toString()}`)
+    }
+  }
+
 
 
   const faqs = [
@@ -347,6 +384,7 @@ export default function PricingPage() {
                         <Button 
                           className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
                           disabled={isPricingLoading}
+                          onClick={handleCreditPurchase}
                         >
                           Buy {getCurrentCreditQuantity()} credit{getCurrentCreditQuantity() !== 1 ? 's' : ''} now
                         </Button>
@@ -404,6 +442,7 @@ export default function PricingPage() {
                         <Button 
                           className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
                           disabled={isPricingLoading}
+                          onClick={handleSubscriptionPurchase}
                         >
                           Subscribe now
                         </Button>
