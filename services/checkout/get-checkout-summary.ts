@@ -2,6 +2,7 @@ import api from "@/lib/axios";
 
 export interface CheckoutSummary {
   id: number;
+  orderId?: number;
   type: 'CREDITS' | 'SUBSCRIPTION';
   quantity?: number;
   amount: number;
@@ -11,10 +12,16 @@ export interface CheckoutSummary {
   createdAt: string;
 }
 
-export const getCheckoutSummary = async (checkoutId: number): Promise<CheckoutSummary> => {
+export const getCheckoutSummary = async (stripeSessionId: string): Promise<CheckoutSummary> => {
   try {
-    const response = await api.get(`/checkouts/session/${checkoutId}`);
-    return response.data;
+    const response = await api.get(`/checkouts/session/${stripeSessionId}`);
+    const data = response.data;
+    
+    // Transform status to uppercase to match frontend enum values
+    return {
+      ...data,
+      status: data.status.toUpperCase()
+    };
   } catch (error: any) {
     console.error("Failed to fetch checkout summary:", error);
     

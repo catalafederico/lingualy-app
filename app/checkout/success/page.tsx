@@ -12,33 +12,58 @@ import {
   Calendar, 
   ArrowRight,
   Download,
-  Mail
+  Mail,
+  AlertCircle
 } from "lucide-react"
 import Link from "next/link"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
+import { getCheckoutSummary, CheckoutSummary } from "@/services/checkout/get-checkout-summary"
 
 function CheckoutSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [checkoutData, setCheckoutData] = useState<CheckoutSummary | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Get session ID from URL for order lookup
   const sessionId = searchParams.get('session_id')
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuthAndFetchData = async () => {
       const accessToken = localStorage.getItem("accessToken")
       if (!accessToken) {
         router.push('/login')
         return
       }
       setIsAuthenticated(true)
+
+      // Fetch checkout data if session_id is available
+      if (sessionId) {
+        try {
+          const data = await getCheckoutSummary(sessionId)
+          
+          // Verify checkout is completed
+          if (data.status !== 'COMPLETED') {
+            setError("Checkout session is not completed")
+            setIsLoading(false)
+            return
+          }
+
+          setCheckoutData(data)
+        } catch (err: any) {
+          setError(err.message || "Failed to load order details")
+        }
+      } else {
+        setError("No checkout session found")
+      }
+      
       setIsLoading(false)
     }
 
-    checkAuth()
-  }, [router])
+    checkAuthAndFetchData()
+  }, [router, sessionId])
 
   if (isLoading) {
     return (
@@ -47,7 +72,38 @@ function CheckoutSuccessContent() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+            <p className="text-gray-600 dark:text-gray-300">Loading order details...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !checkoutData) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <AuthenticatedNavbar currentPage="checkout" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-4">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-10 w-10 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-red-600 mb-2">Order Error</h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              {error || "Unable to load order details"}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/pricing">
+                <Button className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                  Try Again
+                </Button>
+              </Link>
+              <Link href="/profile">
+                <Button variant="outline" className="w-full sm:w-auto">
+                  View Account
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -79,23 +135,24 @@ function CheckoutSuccessContent() {
                 Order Confirmation
               </CardTitle>
               <CardDescription>
-                Order ID: {sessionId || 'ORD-' + Date.now()}
+                Order ID: {checkoutData.orderId || checkoutData.id}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Mock order details - these would come from backend */}
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-semibold">5 Credits</h3>
+                  <h3 className="font-semibold">{checkoutData.label}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Lesson Credits
+                    {checkoutData.type === 'CREDITS' ? 'Lesson Credits' : 'Subscription'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold">$14.95</p>
-                  <Badge variant="outline" className="text-green-600 border-green-600">
-                    Save $1
-                  </Badge>
+                  <p className="font-semibold">${checkoutData.amount.toFixed(2)}</p>
+                  {checkoutData.savings && (
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      {checkoutData.savings}
+                    </Badge>
+                  )}
                 </div>
               </div>
               
@@ -103,13 +160,18 @@ function CheckoutSuccessContent() {
               
               <div className="flex justify-between items-center font-semibold text-lg">
                 <span>Total Paid</span>
-                <span>$14.95 USD</span>
+                <span>${checkoutData.amount.toFixed(2)} USD</span>
               </div>
               
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 mt-4">
                 <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                   <CheckCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Credits have been added to your account</span>
+                  <span className="text-sm font-medium">
+                    {checkoutData.type === 'CREDITS' 
+                      ? 'Credits have been added to your account' 
+                      : 'Subscription has been activated'
+                    }
+                  </span>
                 </div>
               </div>
             </CardContent>
