@@ -18,7 +18,13 @@ export const createCheckoutSession = async (
     const response = await api.post("/checkouts/create-session", request);
     return response.data;
   } catch (error: any) {
-    console.error("Failed to create checkout session:", error);
+    console.error("Failed to create checkout session:", {
+      error,
+      request,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
     
     // Handle specific error cases
     if (error.response?.status === 400) {
@@ -33,6 +39,12 @@ export const createCheckoutSession = async (
       throw new Error("Invalid pricing option selected");
     }
     
-    throw new Error("Failed to create checkout session. Please try again.");
+    if (error.response?.status === 500) {
+      throw new Error("Server error. Please check your configuration and try again.");
+    }
+    
+    // Show the actual error message if available
+    const errorMessage = error.response?.data?.message || error.message || "Failed to create checkout session. Please try again.";
+    throw new Error(errorMessage);
   }
 };

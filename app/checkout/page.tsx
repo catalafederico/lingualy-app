@@ -223,79 +223,67 @@ function CheckoutContent() {
             </p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-2">
+          <div className="max-w-2xl mx-auto space-y-8">
             {/* Order Summary */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {orderSummary?.type === 'credits' ? (
-                      <CreditCard className="h-5 w-5 text-amber-600" />
-                    ) : (
-                      <Calendar className="h-5 w-5 text-orange-600" />
-                    )}
-                    Order Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {orderSummary && (
-                    <>
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-semibold">{orderSummary.label}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {orderSummary.type === 'credits' ? 'Lesson Credits' : 'Full Access Subscription'}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">${orderSummary.price.toFixed(2)}</p>
-                          {orderSummary.savings && (
-                            <Badge variant="outline" className="text-green-600 border-green-600">
-                              {orderSummary.savings}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="flex justify-between items-center font-semibold text-lg">
-                        <span>Total</span>
-                        <span>${orderSummary.price.toFixed(2)} USD</span>
-                      </div>
-                    </>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {orderSummary?.type === 'credits' ? (
+                    <CreditCard className="h-5 w-5 text-amber-600" />
+                  ) : (
+                    <Calendar className="h-5 w-5 text-orange-600" />
                   )}
-                </CardContent>
-              </Card>
+                  Order Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {orderSummary && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-semibold">{orderSummary.label}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {orderSummary.type === 'credits' ? 'Lesson Credits' : 'Full Access Subscription'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">${orderSummary.price.toFixed(2)}</p>
+                        {orderSummary.savings && (
+                          <Badge variant="outline" className="text-green-600 border-green-600">
+                            {orderSummary.savings}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="flex justify-between items-center font-semibold text-lg">
+                      <span>Total</span>
+                      <span>${orderSummary.price.toFixed(2)} USD</span>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
 
-              <Button 
-                variant="outline" 
-                onClick={handleEditOrder}
-                className="w-full"
-              >
-                Edit Order
-              </Button>
-            </div>
-
-            {/* Payment Section */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Details</CardTitle>
-                  <CardDescription>
-                    Secure payment powered by Stripe
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
-                    <CreditCard className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Payment form will be integrated here
-                    </p>
+            {/* Payment Information */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                    <CreditCard className="h-4 w-4" />
+                    <span>Secure payment powered by Stripe</span>
                   </div>
-                </CardContent>
-              </Card>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    You will be redirected to Stripe's secure payment page to complete your purchase
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
+            {/* Action Buttons */}
+            <div className="space-y-4">
               <Button 
                 onClick={handlePayment}
                 disabled={isProcessing}
@@ -305,19 +293,30 @@ function CheckoutContent() {
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
+                    Redirecting to payment...
                   </>
                 ) : (
                   <>
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Complete Purchase
+                    Proceed to Payment
                   </>
                 )}
               </Button>
 
-              <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-                <p>🔒 Your payment information is secure and encrypted</p>
-              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleEditOrder}
+                className="w-full"
+                disabled={isProcessing}
+              >
+                Edit Order
+              </Button>
+            </div>
+
+            {/* Security Notice */}
+            <div className="text-center text-sm text-gray-500 dark:text-gray-400 space-y-2">
+              <p>🔒 Your payment information is secure and encrypted</p>
+              <p className="text-xs">Powered by Stripe • Industry-leading security standards</p>
             </div>
           </div>
         </div>
