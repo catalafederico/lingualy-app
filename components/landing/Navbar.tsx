@@ -35,7 +35,7 @@ export default function Navbar() {
         <Link href="/login">
           <Button 
             variant="outline" 
-            className="border-amber-300 dark:border-amber-600 text-amber-600 dark:text-white hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-300"
+            className="border-amber-300 dark:border-amber-600 text-black dark:text-white hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-300"
           >
             Login
           </Button>
