@@ -23,7 +23,6 @@ export default function Navbar() {
           { href: "/lessons", label: "Lessons" },
           { href: "/pricing", label: "Pricing" },
           { href: "/about", label: "About" },
-          { href: "/login", label: "Login" },
         ].map((link) => (
           <Link
             key={link.href}
@@ -33,6 +32,14 @@ export default function Navbar() {
             {link.label}
           </Link>
         ))}
+        <Link href="/login">
+          <Button 
+            variant="outline" 
+            className="border-amber-300 dark:border-amber-600 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-300"
+          >
+            Login
+          </Button>
+        </Link>
         <Link href="/sign-up">
           <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 text-white">
             Sign Up
