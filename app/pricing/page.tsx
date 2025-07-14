@@ -244,6 +244,15 @@ export default function PricingPage() {
     },
   ]
 
+  // Show loading while checking authentication to prevent navbar flash
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {isAuthenticated ? <AuthenticatedNavbar currentPage="pricing" /> : <Navbar />}
