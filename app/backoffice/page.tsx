@@ -158,7 +158,7 @@ export default function BackofficeAdminPage() {
     // Check admin privileges (only admins can access backoffice)
     if (!checkIsAdmin()) {
       // Redirect non-admin users to regular home page
-      router.push("/home")
+      router.push("/")
       return
     }
 

@@ -155,7 +155,7 @@ export default function ProfilePage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
       <header className="px-4 lg:px-6 h-20 flex items-center border-b bg-white/80 dark:bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 shadow-sm dark:border-gray-700">
-        <Link href="/home" className="flex items-center justify-center">
+        <Link href="/" className="flex items-center justify-center">
           <div className="relative">
             <Sparkles className="h-10 w-10 text-amber-600" />
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-400 rounded-full animate-pulse"></div>

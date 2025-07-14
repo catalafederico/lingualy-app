@@ -31,7 +31,7 @@ import { logoutUser } from "@/services/auth/logout"
 import { getUserProfile, type UserProfile } from "@/services/auth/user-profile"
 
 interface AuthenticatedNavbarProps {
-  currentPage?: 'home' | 'pricing' | 'profile' | 'lessons' | 'backoffice'
+  currentPage?: 'home' | 'lessons' | 'pricing' | 'about' | 'profile' | 'backoffice'
 }
 
 export default function AuthenticatedNavbar({ currentPage = 'home' }: AuthenticatedNavbarProps) {
@@ -107,8 +107,8 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
     } catch (error) {
       console.error("Logout error:", error)
     } finally {
-      // Always redirect to login regardless of API call result
-      router.push("/login")
+      // Always redirect to landing page regardless of API call result
+      router.push("/")
     }
   }
 
@@ -120,6 +120,7 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
       analytics: "Analytics",
       profile: "Profile",
       pricing: "Pricing",
+      about: "About",
       documentation: "Documentation",
       communityForum: "Community Forum",
       feedback: "Feedback",
@@ -138,6 +139,7 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
       analytics: "Análisis",
       profile: "Perfil",
       pricing: "Precios",
+      about: "Acerca de",
       documentation: "Documentación",
       communityForum: "Foro de la Comunidad",
       feedback: "Comentarios",
@@ -156,7 +158,7 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
 
   return (
     <header className="px-4 lg:px-6 h-20 flex items-center border-b bg-white/80 dark:bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 shadow-sm dark:border-gray-700">
-      <Link href="/home" className="flex items-center justify-center">
+      <Link href="/" className="flex items-center justify-center">
         <div className="relative">
           <Sparkles className="h-10 w-10 text-amber-600" />
           <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-400 rounded-full animate-pulse"></div>
@@ -168,14 +170,14 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
       
       <nav className="ml-auto flex gap-6 items-center">
         <Link
-          href="/home"
+          href="/lessons"
           className={`text-sm font-medium hover:text-amber-600 transition-colors ${
-            currentPage === 'home' 
+            currentPage === 'lessons' 
               ? 'text-amber-600 dark:text-amber-400' 
               : 'text-gray-700 dark:text-gray-300'
           }`}
         >
-          {currentText.home}
+          {currentText.lessons}
         </Link>
         <Link
           href="/pricing"
@@ -186,6 +188,16 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
           }`}
         >
           {currentText.pricing}
+        </Link>
+        <Link
+          href="/about"
+          className={`text-sm font-medium hover:text-amber-600 transition-colors ${
+            currentPage === 'about' 
+              ? 'text-amber-600 dark:text-amber-400' 
+              : 'text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          {currentText.about}
         </Link>
         
         {/* Admin Backoffice Link */}

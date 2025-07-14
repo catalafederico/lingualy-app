@@ -31,7 +31,7 @@ export default function LoginPage() {
     try {
 
       await loginUser({email, password})
-      router.push("/home")
+      router.push("/")
 
     } catch (error: any) {
       if(error.status === HttpStatusCode.Forbidden){

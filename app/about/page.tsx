@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,10 +8,25 @@ import { Sparkles, Award, Globe, Heart, Target, Lightbulb, Mail, MapPin, Phone, 
 import Image from "next/image"
 import Link from "next/link"
 import Navbar from "@/components/landing/Navbar"
+import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
+import { isAuthenticated } from "@/lib/auth"
 
 export default function AboutPage() {
-  // Initialize theme from localStorage on component mount
+  const [isAuth, setIsAuth] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isClient, setIsClient] = useState(false)
+
+  // Initialize theme and check authentication on component mount
   useEffect(() => {
+    // Mark as client-side to prevent hydration mismatch
+    setIsClient(true)
+    
+    // Check authentication status
+    const authStatus = isAuthenticated()
+    setIsAuth(authStatus)
+    setIsLoading(false)
+
+    // Initialize theme
     const savedTheme = localStorage.getItem("theme")
     if (savedTheme === "dark") {
       document.documentElement.classList.add("dark")
@@ -83,9 +98,18 @@ export default function AboutPage() {
     { number: "150+", label: "Countries Reached" },
   ]
 
+  // Show loading while checking authentication
+  if (isLoading || !isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <Navbar />
+      {isAuth ? <AuthenticatedNavbar currentPage="about" /> : <Navbar />}
 
       <main className="flex-1">
         {/* Hero Section */}

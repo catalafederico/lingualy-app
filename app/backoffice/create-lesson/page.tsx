@@ -179,7 +179,7 @@ export default function CreateLessonPage() {
     }
     
     if (!checkIsAdmin()) {
-      router.push("/home")
+      router.push("/")
       return
     }
   }, [router])
