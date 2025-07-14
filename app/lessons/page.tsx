@@ -38,13 +38,14 @@ import { useRouter } from "next/navigation"
 import { isAuthenticated as checkIsAuthenticated } from "@/lib/auth"
 import { getUserProfile, type UserProfile } from "@/services/auth/user-profile"
 import { getLessons, type LessonsResponse, type LessonQueryParams } from "@/services/lessons/get-lessons"
-import { CEFR_LEVELS, LESSON_CATEGORIES } from "@/lib/constants"
+import { CEFR_LEVELS, LESSON_CATEGORIES, LESSON_TYPES } from "@/lib/constants"
 
 export default function LessonsPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLevels, setSelectedLevels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [language, setLanguage] = useState<"en" | "es">("en")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -65,6 +66,7 @@ export default function LessonsPage() {
         search: searchTerm || undefined,
         categories: selectedCategories.length > 0 ? selectedCategories : undefined,
         levels: selectedLevels.length > 0 ? selectedLevels : undefined,
+        types: selectedTypes.length > 0 ? selectedTypes : undefined,
       }
       
       const response = await getLessons(params)
@@ -119,7 +121,7 @@ export default function LessonsPage() {
   // Fetch lessons when filters or pagination change
   useEffect(() => {
     fetchLessons()
-  }, [currentPage, searchTerm, selectedLevels, selectedCategories])
+  }, [currentPage, searchTerm, selectedLevels, selectedCategories, selectedTypes])
 
   // Internationalization text
   const getUserName = () => {
@@ -314,17 +316,26 @@ export default function LessonsPage() {
     }
   }
 
+  const handleTypeChange = (type: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTypes([...selectedTypes, type])
+    } else {
+      setSelectedTypes(selectedTypes.filter(t => t !== type))
+    }
+  }
+
   const clearAllFilters = () => {
     setSearchTerm("")
     setSelectedLevels([])
     setSelectedCategories([])
+    setSelectedTypes([])
     setCurrentPage(1)
   }
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, selectedLevels, selectedCategories])
+  }, [searchTerm, selectedLevels, selectedCategories, selectedTypes])
 
   const goToPage = (page: number) => {
     setCurrentPage(page)
@@ -429,6 +440,29 @@ export default function LessonsPage() {
                             className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
                           >
                             {category.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Type Filters */}
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Type</h3>
+                    <div className="space-y-2">
+                      {LESSON_TYPES.map((type) => (
+                        <div key={type.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`type-${type.value}`}
+                            checked={selectedTypes.includes(type.value)}
+                            onCheckedChange={(checked) => handleTypeChange(type.value, checked as boolean)}
+                            className="border-gray-300 dark:border-gray-600"
+                          />
+                          <label
+                            htmlFor={`type-${type.value}`}
+                            className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+                          >
+                            {type.label}
                           </label>
                         </div>
                       ))}

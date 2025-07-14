@@ -7,6 +7,7 @@ export interface LessonQueryParams {
   search?: string
   categories?: string[]
   levels?: string[]
+  types?: string[]
   sortBy?: string
   sortOrder?: 'ASC' | 'DESC'
 }

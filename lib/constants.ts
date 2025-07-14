@@ -21,6 +21,13 @@ export const LESSON_CATEGORIES = [
   { value: 'Other', label: 'Other' },
 ] as const;
 
+// Lesson Types for filtering by premium status
+export const LESSON_TYPES = [
+  { value: 'free', label: 'Free' },
+  { value: 'premium', label: 'Premium' },
+] as const;
+
 // Type definitions for TypeScript
 export type CEFRLevel = typeof CEFR_LEVELS[number]['value'];
 export type LessonCategory = typeof LESSON_CATEGORIES[number]['value'];
+export type LessonType = typeof LESSON_TYPES[number]['value'];
