@@ -107,16 +107,19 @@ export default function SignupPage() {
                   <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-300 text-left block">
                     Last Name﹡
                   </Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    placeholder="Doe"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange("lastName", e.target.value)}
-                    className="h-12 border-gray-200 dark:border-gray-600 focus:border-amber-500 focus:ring-amber-500 dark:bg-slate-700 dark:text-white"
-                    required
-                    disabled={isLoading}
-                  />
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Doe"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange("lastName", e.target.value)}
+                      className="pl-10 h-12 border-gray-200 dark:border-gray-600 focus:border-amber-500 focus:ring-amber-500 dark:bg-slate-700 dark:text-white"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
               </div>
 
