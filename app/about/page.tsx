@@ -10,6 +10,7 @@ import Link from "next/link"
 import Navbar from "@/components/landing/Navbar"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
 import { isAuthenticated } from "@/lib/auth"
+import { getUserProfile } from "@/services/auth/user-profile"
 
 export default function AboutPage() {
   const [isAuth, setIsAuth] = useState(false)
@@ -21,11 +22,6 @@ export default function AboutPage() {
     // Mark as client-side to prevent hydration mismatch
     setIsClient(true)
     
-    // Check authentication status
-    const authStatus = isAuthenticated()
-    setIsAuth(authStatus)
-    setIsLoading(false)
-
     // Initialize theme
     const savedTheme = localStorage.getItem("theme")
     if (savedTheme === "dark") {
@@ -39,6 +35,31 @@ export default function AboutPage() {
         document.documentElement.classList.add("dark")
       }
     }
+
+    // Check authentication by validating token with backend
+    const validateAuthentication = async () => {
+      const hasToken = isAuthenticated()
+      
+      if (hasToken) {
+        try {
+          // Validate token by fetching user profile
+          await getUserProfile()
+          setIsAuth(true)
+        } catch (error) {
+          console.error('Token validation failed:', error)
+          // Token is invalid or backend is down, clear it and treat as unauthenticated
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('userRole')
+          setIsAuth(false)
+        }
+      } else {
+        setIsAuth(false)
+      }
+      
+      setIsLoading(false)
+    }
+
+    validateAuthentication()
   }, [])
 
   const team = [

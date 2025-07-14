@@ -80,31 +80,40 @@ export default function LessonsPage() {
 
   // Check authentication and initialize language on component mount
   useEffect(() => {
-    const isAuth = checkIsAuthenticated()
-    setIsAuthenticated(isAuth)
-
     // Initialize language
     const savedLanguage = localStorage.getItem("language") as "en" | "es" | null
     if (savedLanguage) {
       setLanguage(savedLanguage)
     }
 
-    // Fetch user profile data only if authenticated
-    const fetchUserProfile = async () => {
-      if (isAuth) {
+    // Check authentication by validating token with backend
+    const validateAuthentication = async () => {
+      const hasToken = checkIsAuthenticated()
+      
+      if (hasToken) {
         try {
+          // Validate token by fetching user profile
           const profile = await getUserProfile()
           setUserProfile(profile)
+          setIsAuthenticated(true)
         } catch (error) {
-          console.error('Failed to fetch user profile:', error)
-          // Keep userProfile as null, will show fallback
+          console.error('Token validation failed:', error)
+          // Token is invalid or backend is down, clear it and treat as unauthenticated
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('userRole')
+          setIsAuthenticated(false)
+          setUserProfile(null)
         }
+      } else {
+        setIsAuthenticated(false)
+        setUserProfile(null)
       }
+      
+      setIsLoading(false)
     }
 
-    fetchUserProfile()
+    validateAuthentication()
     fetchLessons()
-    setIsLoading(false)
   }, [router])
 
   // Fetch lessons when filters or pagination change

@@ -9,16 +9,13 @@ import Footer from "@/components/landing/Footer"
 import Navbar from "@/components/landing/Navbar"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
 import { isAuthenticated } from "@/lib/auth"
+import { getUserProfile } from "@/services/auth/user-profile"
 
 export default function LingualyLanding() {
   const [isAuth, setIsAuth] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check authentication status
-    setIsAuth(isAuthenticated())
-    setIsLoading(false)
-
     // Initialize theme
     const savedTheme = localStorage.getItem("theme")
     if (savedTheme === "dark") {
@@ -29,6 +26,31 @@ export default function LingualyLanding() {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
       if (prefersDark) document.documentElement.classList.add("dark")
     }
+
+    // Check authentication by validating token with backend
+    const validateAuthentication = async () => {
+      const hasToken = isAuthenticated()
+      
+      if (hasToken) {
+        try {
+          // Validate token by fetching user profile
+          await getUserProfile()
+          setIsAuth(true)
+        } catch (error) {
+          console.error('Token validation failed:', error)
+          // Token is invalid or backend is down, clear it and treat as unauthenticated
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('userRole')
+          setIsAuth(false)
+        }
+      } else {
+        setIsAuth(false)
+      }
+      
+      setIsLoading(false)
+    }
+
+    validateAuthentication()
   }, [])
 
   // Show loading while checking authentication

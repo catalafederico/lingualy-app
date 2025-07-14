@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"
 import Navbar from "@/components/landing/Navbar"
 import { getPricingOptions, PricingOptions } from "@/services/pricing"
+import { getUserProfile } from "@/services/auth/user-profile"
 
 export default function PricingPage() {
   const router = useRouter()
@@ -57,19 +58,38 @@ export default function PricingPage() {
 
   // Check authentication on mount
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken")
-    setIsAuthenticated(!!accessToken)
-
     // Initialize language
     const savedLanguage = localStorage.getItem("language") as "en" | "es" | null
     if (savedLanguage) {
       setLanguage(savedLanguage)
     }
 
+    // Check authentication by validating token with backend
+    const validateAuthentication = async () => {
+      const accessToken = localStorage.getItem("accessToken")
+      
+      if (accessToken) {
+        try {
+          // Validate token by fetching user profile
+          await getUserProfile()
+          setIsAuthenticated(true)
+        } catch (error) {
+          console.error('Token validation failed:', error)
+          // Token is invalid or backend is down, clear it and treat as unauthenticated
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('userRole')
+          setIsAuthenticated(false)
+        }
+      } else {
+        setIsAuthenticated(false)
+      }
+      
+      setIsLoading(false)
+    }
+
     // Fetch pricing data
     fetchPricingData()
-
-    setIsLoading(false)
+    validateAuthentication()
   }, [])
 
 
