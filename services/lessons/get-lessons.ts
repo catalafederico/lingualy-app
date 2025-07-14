@@ -57,6 +57,7 @@ export interface Lesson {
   tags?: string[]
   isNew: boolean
   isPremium: boolean
+  creditCost: number
   objectives?: string[]
   materials?: string[]
   procedures?: LessonProcedure[]

@@ -30,6 +30,7 @@ export const mockLessons: Lesson[] = [
     ],
     isNew: true,
     isPremium: false,
+    creditCost: 0,
     objectives: [
       "Students will identify key character traits and motivations",
       "Students will create detailed character profiles",
@@ -163,6 +164,7 @@ export const mockLessons: Lesson[] = [
     ],
     isNew: false,
     isPremium: true,
+    creditCost: 2,
     objectives: [
       "Analyze Shakespeare's use of dramatic irony in Act 1",
       "Identify key themes introduced in the opening scenes",
@@ -306,6 +308,7 @@ export const mockLessons: Lesson[] = [
     ],
     isNew: false,
     isPremium: false,
+    creditCost: 0,
     objectives: [
       "Students will use time expressions correctly",
       "Students will describe their daily routine in chronological order",
@@ -442,6 +445,7 @@ export const mockLessons: Lesson[] = [
     ],
     isNew: true,
     isPremium: false,
+    creditCost: 0,
     objectives: [
       "Students will identify fractions using visual models",
       "Students will understand that fractions represent parts of a whole",
@@ -578,6 +582,7 @@ export const mockLessons: Lesson[] = [
     ],
     isNew: false,
     isPremium: true,
+    creditCost: 3,
     objectives: [
       "Students will identify the four stages of the water cycle",
       "Students will explain how water moves through the environment",

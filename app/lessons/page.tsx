@@ -286,17 +286,17 @@ export default function LessonsPage() {
   const getLevelColor = (level: string) => {
     switch (level) {
       case "Beginner":
-        return "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+        return "bg-green-500 dark:bg-green-600 text-white"
       case "Pre-intermediate":
-        return "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+        return "bg-blue-500 dark:bg-blue-600 text-white"
       case "Intermediate":
-        return "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300"
+        return "bg-yellow-500 dark:bg-yellow-600 text-white"
       case "Upper-intermediate":
-        return "bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300"
+        return "bg-orange-500 dark:bg-orange-600 text-white"
       case "Advanced":
-        return "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
+        return "bg-red-500 dark:bg-red-600 text-white"
       default:
-        return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+        return "bg-gray-500 dark:bg-gray-600 text-white"
     }
   }
 
@@ -540,7 +540,14 @@ export default function LessonsPage() {
                             </Badge>
                           </div>
                           <CardTitle className="text-lg leading-tight text-gray-900 dark:text-gray-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                            {lesson.title}
+                            <div className="flex items-center justify-between gap-2">
+                              <span>{lesson.title}</span>
+                              {lesson.isPremium && lesson.creditCost > 0 && (
+                                <Badge className="bg-purple-500 text-white text-xs shrink-0">
+                                  {lesson.creditCost} {lesson.creditCost === 1 ? 'Credit' : 'Credits'}
+                                </Badge>
+                              )}
+                            </div>
                           </CardTitle>
                           <CardDescription className="text-gray-600 dark:text-gray-400">{lesson.description}</CardDescription>
                         </CardHeader>
