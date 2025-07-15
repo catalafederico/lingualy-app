@@ -248,7 +248,7 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {isLoadingUser ? 'Loading...' : userProfile?.email || 'No email available'}
                   </p>
-                  <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300 mt-1">
                     <Coins className="h-4 w-4 text-amber-600" />
                     <span>{userProfile?.credits || 0} {currentText.credits}</span>
                   </div>

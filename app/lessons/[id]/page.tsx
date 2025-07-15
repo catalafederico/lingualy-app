@@ -27,6 +27,7 @@ import {
   Award,
   Lightbulb,
   MessageSquare,
+  Coins,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
@@ -422,8 +423,14 @@ export default function LessonDetailPage() {
                     </div>
                     
                     <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                      <p>💰 Your Credits: {lesson.accessStatus.userCredits}</p>
-                      <p>📚 Lesson Cost: {lesson.accessStatus.creditCost} credits</p>
+                      <div className="flex items-center gap-1">
+                        <Coins className="h-4 w-4 text-amber-600" />
+                        <span>Your Credits: {lesson.accessStatus.userCredits}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-4 w-4 text-blue-600" />
+                        <span>Lesson Cost: {lesson.accessStatus.creditCost} credits</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
