@@ -38,7 +38,8 @@ import {
   MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
-import { createLesson, createLessonWithFiles, updateLessonWithFiles, getLessonById, publishLesson, CreateLessonData } from "@/services/lessons/create-lesson"
+import { createLesson, createLessonWithFiles, updateLessonWithFiles, publishLesson, CreateLessonData } from "@/services/lessons/create-lesson"
+import { getLessonById } from "@/services/lessons/get-lessons"
 import type { LessonProcedure } from "@/services/lessons/get-lessons"
 import { CEFR_LEVELS, LESSON_CATEGORIES } from "@/lib/constants"
 import AuthenticatedNavbar from "@/components/AuthenticatedNavbar"

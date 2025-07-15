@@ -55,6 +55,7 @@ export const createLesson = async (data: CreateLessonData): Promise<Lesson> => {
     duration: data.duration,
     rating: 0,
     downloads: 0,
+    creditCost: 0,
     coverImage: data.previewImage ? {
       originalName: "cover.jpg",
       mimeType: "image/jpeg",
@@ -246,36 +247,6 @@ export const updateLessonWithFiles = async (
   }
 };
 
-export const getLessonById = async (id: number): Promise<Lesson> => {
-  try {
-    const response = await axios.get(`/lessons/${id}`)
-    return response.data
-  } catch (error: any) {
-    // Handle specific error types
-    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-      throw new Error('Network connection failed. Please check your internet connection and try again.')
-    }
-    
-    if (error.response?.status === 404) {
-      throw new Error('Lesson not found. It may have been deleted or moved.')
-    }
-    
-    if (error.response?.status === 401) {
-      throw new Error('Authentication required. Please log in again.')
-    }
-    
-    if (error.response?.status === 403) {
-      throw new Error('Permission denied. You do not have access to view this lesson.')
-    }
-    
-    if (error.response?.status >= 500) {
-      throw new Error('Server error. Please try again later.')
-    }
-    
-    // Generic error fallback
-    throw new Error(error.response?.data?.message || 'Failed to load lesson. Please try again.')
-  }
-};
 
 export const deleteLesson = async (id: number): Promise<void> => {
   try {

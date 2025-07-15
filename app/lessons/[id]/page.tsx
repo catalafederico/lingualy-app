@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getLessonById, downloadFile, rateLesson, type Lesson } from "@/services/lessons"
+import { getLessonById, downloadFile, rateLesson, acquireLesson, createLessonCheckout, type Lesson } from "@/services/lessons"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +47,8 @@ export default function LessonDetailPage() {
   const [userRating, setUserRating] = useState<number>(0)
   const [isRatingLoading, setIsRatingLoading] = useState(false)
   const [hoveredRating, setHoveredRating] = useState<number>(0)
+  const [isAcquiring, setIsAcquiring] = useState(false)
+  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false)
 
   useEffect(() => {
     // Check authentication
@@ -64,7 +66,18 @@ export default function LessonDetailPage() {
   const loadLesson = async () => {
     try {
       const lessonData = await getLessonById(parseInt(lessonId))
-      setLesson(lessonData)
+      // Ensure arrays are never undefined to prevent map errors
+      const safeLesson = {
+        ...lessonData,
+        tags: lessonData.tags || [],
+        objectives: lessonData.objectives || [],
+        materials: lessonData.materials || [],
+        procedures: lessonData.procedures || [],
+        assessment: lessonData.assessment || [],
+        activities: lessonData.activities || [], // Will be empty array if backend doesn't return activities
+        downloadFiles: lessonData.downloadFiles || [],
+      }
+      setLesson(safeLesson)
     } catch (error) {
       console.error('Error loading lesson:', error)
       setError('Failed to load lesson')
@@ -75,6 +88,12 @@ export default function LessonDetailPage() {
 
   const handleRating = async (rating: number) => {
     if (!lesson || isRatingLoading) return
+    
+    // Check if user can rate this lesson
+    if (lesson.accessStatus && !lesson.accessStatus.canRate) {
+      toast.error('You need to acquire this lesson or have a subscription to rate it.')
+      return
+    }
     
     try {
       setIsRatingLoading(true)
@@ -146,6 +165,42 @@ export default function LessonDetailPage() {
     }
   }
 
+  const handleAcquireLesson = async () => {
+    if (!lesson) return
+    
+    try {
+      setIsAcquiring(true)
+      await acquireLesson(lesson.id)
+      toast.success('Lesson acquired successfully!')
+      // Reload lesson to get updated access status
+      await loadLesson()
+    } catch (error: any) {
+      console.error('Error acquiring lesson:', error)
+      toast.error(error.message || 'Failed to acquire lesson. Please try again.')
+    } finally {
+      setIsAcquiring(false)
+    }
+  }
+
+  const handleBuyLesson = async () => {
+    if (!lesson) return
+    
+    try {
+      setIsCreatingCheckout(true)
+      const checkout = await createLessonCheckout(lesson.id)
+      // Redirect to Stripe checkout
+      window.location.href = checkout.url
+    } catch (error: any) {
+      console.error('Error creating checkout:', error)
+      toast.error(error.message || 'Failed to create checkout. Please try again.')
+      setIsCreatingCheckout(false)
+    }
+  }
+
+  const handleSubscribeNow = () => {
+    router.push('/pricing')
+  }
+
   const getLevelColor = (level: string) => {
     switch (level) {
       case "Beginner":
@@ -196,9 +251,9 @@ export default function LessonDetailPage() {
       <AuthenticatedNavbar currentPage="lessons" />
 
       <main className="flex-1 py-8 px-4">
-        <div className="max-w-6xl mx-auto space-y-8" data-lesson-content>
+        <div className="max-w-6xl mx-auto space-y-6" data-lesson-content>
           {/* Back Button */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 -ml-8">
             <Button
               variant="ghost"
               onClick={() => router.back()}
@@ -305,8 +360,78 @@ export default function LessonDetailPage() {
                 </CardHeader>
               </Card>
 
-              {/* Lesson Content Tabs */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
+              {/* Access Control */}
+              {lesson.isPremium && lesson.accessStatus && !lesson.accessStatus.hasAccess && (
+                <Card className="border-0 shadow-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
+                  <CardContent className="p-6 text-center space-y-4">
+                    <div className="flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400">
+                      <Lightbulb className="h-5 w-5" />
+                      <h3 className="text-lg font-semibold">Premium Content</h3>
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      This premium lesson contains exclusive content. To access the full lesson including procedures, materials, assessment and downloadable files, you need to acquire it.
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                      {lesson.accessStatus.canAffordWithCredits ? (
+                        <Button 
+                          onClick={handleAcquireLesson}
+                          disabled={isAcquiring}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {isAcquiring ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Acquiring...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Acquire with {lesson.accessStatus.creditCost} Credits
+                            </>
+                          )}
+                        </Button>
+                      ) : (
+                        <Button 
+                          onClick={handleBuyLesson}
+                          disabled={isCreatingCheckout}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          {isCreatingCheckout ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Creating Checkout...
+                            </>
+                          ) : (
+                            <>
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Buy Lesson for ${lesson.accessStatus.lessonPrice}
+                            </>
+                          )}
+                        </Button>
+                      )}
+                      
+                      <Button 
+                        onClick={handleSubscribeNow}
+                        variant="outline"
+                        className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20"
+                      >
+                        <Heart className="h-4 w-4 mr-2" />
+                        Subscribe Now
+                      </Button>
+                    </div>
+                    
+                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                      <p>💰 Your Credits: {lesson.accessStatus.userCredits}</p>
+                      <p>📚 Lesson Cost: {lesson.accessStatus.creditCost} credits</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Lesson Content Tabs - Only show if not a locked premium lesson */}
+              {!(lesson.isPremium && lesson.accessStatus && !lesson.accessStatus.hasAccess) && (
+                <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
                 <CardContent className="p-6">
                   <Tabs defaultValue="overview" className="w-full">
                     <TabsList className="grid w-full grid-cols-4">
@@ -342,17 +467,23 @@ export default function LessonDetailPage() {
                           Skills & Activities
                         </h3>
                         <div className="space-y-3">
-                          {lesson.activities?.map((activity, index) => (
-                            <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                                  {activity.skill.charAt(0)}
+                          {lesson.activities && lesson.activities.length > 0 ? (
+                            lesson.activities.map((activity, index) => (
+                              <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                                    {activity.skill.charAt(0)}
+                                  </div>
+                                  <h4 className="font-semibold text-gray-900 dark:text-gray-100">{activity.skill}</h4>
                                 </div>
-                                <h4 className="font-semibold text-gray-900 dark:text-gray-100">{activity.skill}</h4>
+                                <p className="text-gray-700 dark:text-gray-300 text-sm ml-8">{activity.description}</p>
                               </div>
-                              <p className="text-gray-700 dark:text-gray-300 text-sm ml-8">{activity.description}</p>
+                            ))
+                          ) : (
+                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                              <p>No activities available for this lesson.</p>
                             </div>
-                          ))}
+                          )}
                         </div>
                       </div>
                     </TabsContent>
@@ -412,6 +543,7 @@ export default function LessonDetailPage() {
                   </Tabs>
                 </CardContent>
               </Card>
+              )}
             </div>
 
             {/* Right Column - Sidebar */}
@@ -422,26 +554,45 @@ export default function LessonDetailPage() {
                   {/* User Rating Section - Separate from lesson's overall rating */}
                   <div className="text-center space-y-3">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rate this lesson</h3>
-                    <div className="flex items-center justify-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() => handleRating(star)}
-                          onMouseEnter={() => setHoveredRating(star)}
-                          onMouseLeave={() => setHoveredRating(0)}
-                          disabled={isRatingLoading}
-                          className="p-1 hover:scale-110 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Star 
-                            className={`h-8 w-8 transition-colors duration-200 ${
-                              star <= (hoveredRating || userRating) 
-                                ? 'text-yellow-400 fill-yellow-400' 
-                                : 'text-gray-300 dark:text-gray-600'
-                            }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
+                    
+                    {/* Check if user can rate */}
+                    {lesson.accessStatus && !lesson.accessStatus.canRate ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                              key={star}
+                              className="h-8 w-8 text-gray-300 dark:text-gray-600 opacity-50"
+                            />
+                          ))}
+                        </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          🔒 Acquire this lesson to rate it
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => handleRating(star)}
+                            onMouseEnter={() => setHoveredRating(star)}
+                            onMouseLeave={() => setHoveredRating(0)}
+                            disabled={isRatingLoading}
+                            className="p-1 hover:scale-110 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Star 
+                              className={`h-8 w-8 transition-colors duration-200 ${
+                                star <= (hoveredRating || userRating) 
+                                  ? 'text-yellow-400 fill-yellow-400' 
+                                  : 'text-gray-300 dark:text-gray-600'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
                     {userRating > 0 && (
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         You rated this lesson {userRating} star{userRating !== 1 ? 's' : ''}
@@ -486,8 +637,8 @@ export default function LessonDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* Download Files */}
-              {lesson.downloadFiles && lesson.downloadFiles.length > 0 && (
+              {/* Download Files - Only show if not a locked premium lesson */}
+              {lesson.downloadFiles && lesson.downloadFiles.length > 0 && !(lesson.isPremium && lesson.accessStatus && !lesson.accessStatus.hasAccess) && (
                 <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
                   <CardContent className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Download Files</h3>

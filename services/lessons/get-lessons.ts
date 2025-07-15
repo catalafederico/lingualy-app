@@ -35,6 +35,18 @@ export interface LessonActivity {
   description: string
 }
 
+export interface AccessStatus {
+  hasAccess: boolean
+  isSubscriber: boolean
+  hasAcquired: boolean
+  userCredits: number
+  canAffordWithCredits: boolean
+  lessonPrice: number
+  creditCost: number
+  accessMethod: string
+  canRate: boolean
+}
+
 export interface Lesson {
   id: number
   title: string
@@ -54,16 +66,16 @@ export interface Lesson {
     publicUrl: string
     uploadedAt: string
   }
-  tags?: string[]
+  tags: string[]
   isNew: boolean
   isPremium: boolean
   creditCost: number
-  objectives?: string[]
-  materials?: string[]
-  procedures?: LessonProcedure[]
-  assessment?: string[]
-  activities?: LessonActivity[]
-  downloadFiles?: LessonDownloadFile[]
+  objectives: string[]
+  materials: string[]
+  procedures: LessonProcedure[]
+  assessment: string[]
+  activities: LessonActivity[]
+  downloadFiles: LessonDownloadFile[]
   viewCount: number
   favoriteCount: number
   author: {
@@ -74,6 +86,7 @@ export interface Lesson {
   }
   createdAt: string
   updatedAt: string
+  accessStatus?: AccessStatus
 }
 
 export interface LessonsResponse {
