@@ -43,6 +43,20 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
   const [isLoadingUser, setIsLoadingUser] = useState(true)
   const [isClient, setIsClient] = useState(false)
 
+  // Fetch user profile data
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoadingUser(true)
+      const profile = await getUserProfile()
+      setUserProfile(profile)
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error)
+      // Keep userProfile as null, will show fallback
+    } finally {
+      setIsLoadingUser(false)
+    }
+  }
+
   // Initialize theme and language on component mount
   useEffect(() => {
     // Mark as client-side to prevent hydration mismatch
@@ -67,20 +81,19 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
     }
 
     // Fetch user profile data
-    const fetchUserProfile = async () => {
-      try {
-        setIsLoadingUser(true)
-        const profile = await getUserProfile()
-        setUserProfile(profile)
-      } catch (error) {
-        console.error('Failed to fetch user profile:', error)
-        // Keep userProfile as null, will show fallback
-      } finally {
-        setIsLoadingUser(false)
-      }
+    fetchUserProfile()
+
+    // Listen for custom event to refresh user profile
+    const handleRefreshProfile = () => {
+      fetchUserProfile()
     }
 
-    fetchUserProfile()
+    window.addEventListener('refreshUserProfile', handleRefreshProfile)
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('refreshUserProfile', handleRefreshProfile)
+    }
   }, [])
 
   const handleThemeChange = (newTheme: "light" | "dark") => {

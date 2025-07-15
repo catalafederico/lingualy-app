@@ -27,6 +27,7 @@ import {
   Award,
   Lightbulb,
   MessageSquare,
+  Coins,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
@@ -174,6 +175,8 @@ export default function LessonDetailPage() {
       toast.success('Lesson acquired successfully!')
       // Reload lesson to get updated access status
       await loadLesson()
+      // Trigger event to refresh user profile in navbar
+      window.dispatchEvent(new CustomEvent('refreshUserProfile'))
     } catch (error: any) {
       console.error('Error acquiring lesson:', error)
       toast.error(error.message || 'Failed to acquire lesson. Please try again.')
@@ -422,7 +425,7 @@ export default function LessonDetailPage() {
                     </div>
                     
                     <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                      <p>🪙 Your Credits: {lesson.accessStatus.userCredits}</p>
+                      <p><Coins className="h-4 w-4 text-amber-600 inline mr-1" /> Your Credits: {lesson.accessStatus.userCredits}</p>
                       <p>📚 Lesson Cost: {lesson.accessStatus.creditCost} credits</p>
                     </div>
                   </CardContent>

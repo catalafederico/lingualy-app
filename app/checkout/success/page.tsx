@@ -52,6 +52,8 @@ function CheckoutSuccessContent() {
           }
 
           setCheckoutData(data)
+          // Trigger event to refresh user profile in navbar after successful purchase
+          window.dispatchEvent(new CustomEvent('refreshUserProfile'))
         } catch (err: any) {
           setError(err.message || "Failed to load order details")
         }
