@@ -17,6 +17,7 @@ export interface UserProfile {
   location?: string;
   isEmailConfirmed: boolean;
   role?: Role;
+  credits?: number;
 }
 
 export interface UpdateUserProfileData {

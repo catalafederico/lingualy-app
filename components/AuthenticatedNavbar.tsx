@@ -23,6 +23,7 @@ import {
   Sun,
   Moon,
   Shield,
+  Coins,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -132,6 +133,7 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
       dark: "Dark",
       english: "English",
       spanish: "Spanish",
+      credits: "Credits",
     },
     es: {
       home: "Inicio",
@@ -151,6 +153,7 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
       dark: "Oscuro",
       english: "Inglés",
       spanish: "Español",
+      credits: "Créditos",
     },
   }
 
@@ -215,6 +218,15 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
           </Link>
         )}
         
+        {/* Vertical separator */}
+        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
+        
+        {/* Credits Display */}
+        <div className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span>{userProfile?.credits || 0}</span>
+          <Coins className="h-4 w-4 text-amber-600" />
+        </div>
+        
         {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -232,9 +244,15 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
             {/* User Info */}
             <div className="px-4 py-3 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {isLoadingUser ? 'Loading...' : userProfile?.email || 'No email available'}
-                </p>
+                <div className="flex flex-col">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {isLoadingUser ? 'Loading...' : userProfile?.email || 'No email available'}
+                  </p>
+                  <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <Coins className="h-4 w-4 text-amber-600" />
+                    <span>{userProfile?.credits || 0} {currentText.credits}</span>
+                  </div>
+                </div>
                 {isClient && isAdmin() && (
                   <div className="flex items-center gap-1 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-2 py-1 rounded-full text-xs">
                     <Shield className="h-3 w-3" />
@@ -250,14 +268,23 @@ export default function AuthenticatedNavbar({ currentPage = 'home' }: Authentica
                 <UserCog className="h-4 w-4 mr-3 text-gray-500 dark:text-gray-400" />
                 <span>{currentText.profile}</span>
               </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
               <DropdownMenuItem className="px-4 py-3 cursor-pointer">
                 <Book className="h-4 w-4 mr-3 text-gray-500 dark:text-gray-400" />
                 <span>{currentText.documentation}</span>
               </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
               <DropdownMenuItem className="px-4 py-3 cursor-pointer">
                 <Users className="h-4 w-4 mr-3 text-gray-500 dark:text-gray-400" />
                 <span>{currentText.communityForum}</span>
               </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
               <DropdownMenuItem className="px-4 py-3 cursor-pointer">
                 <HelpCircle className="h-4 w-4 mr-3 text-gray-500 dark:text-gray-400" />
                 <span>{currentText.feedback}</span>
